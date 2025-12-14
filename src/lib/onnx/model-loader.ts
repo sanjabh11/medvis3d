@@ -1,8 +1,9 @@
 import * as ort from 'onnxruntime-web';
 
-const MODEL_URL = '/models/depth-anything-v2-small.onnx';
-const CACHE_NAME = 'medvis3d-models-v1';
-const MODEL_SIZE_BYTES = 50 * 1024 * 1024; // ~50MB estimated
+// Use HuggingFace CDN for the ONNX model (95MB)
+const MODEL_URL = 'https://huggingface.co/onnx-community/depth-anything-v2-small/resolve/main/onnx/model.onnx';
+const CACHE_NAME = 'medvis3d-models-v2';
+const MODEL_SIZE_BYTES = 99 * 1024 * 1024; // ~99MB
 
 export type ModelLoadProgress = {
   stage: 'checking-cache' | 'downloading' | 'creating-session' | 'ready' | 'error';
