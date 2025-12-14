@@ -1,0 +1,428 @@
+{
+  "meta": {
+    "project_name": "Medical Imaging 3D Visualization",
+    "version": "1.0.0",
+    "last_updated": "2024-12-14T13:40:00+05:30",
+    "session_count": 1,
+    "description": "Browser-based, client-side AI tool for converting 2D medical images to interactive 3D visualizations"
+  },
+  "project_understanding": {
+    "core_value_proposition": "Instant, secure, privacy-preserving 3D visualization of patient anatomy from 2D medical images using client-side AI",
+    "target_market": {
+      "primary": ["Orthopedic Surgeons", "Radiologists", "Patients"],
+      "market_size": "$89.26B by 2034 (14.59% CAGR)",
+      "north_america_share": "40%"
+    },
+    "key_differentiators": [
+      "Zero server cost - client-side inference",
+      "PHI never leaves patient device",
+      "Instant processing (seconds vs hours)",
+      "Low cost vs $3000+ surgical planning tools",
+      "Mobile-first WebGPU architecture"
+    ]
+  },
+  "technology_stack": {
+    "ai_model": {
+      "name": "Depth Anything V2 (ViT-S)",
+      "parameters": "24.8M",
+      "format": "ONNX",
+      "quantization": {
+        "fp16": "~50MB - preferred for modern devices",
+        "int8": "~25MB - bandwidth constrained"
+      },
+      "advantages": [
+        "10x faster than diffusion models",
+        "Robust for transparent objects (X-ray)",
+        "Fine detail preservation (fractures)"
+      ]
+    },
+    "inference_runtime": {
+      "primary": "ONNX Runtime Web with WebGPU",
+      "fallback": "WebAssembly (WASM) with SIMD",
+      "wrapper": "Transformers.js v3+"
+    },
+    "3d_rendering": {
+      "engine": "React Three Fiber (R3F)",
+      "underlying": "Three.js with WebGL",
+      "controls": "OrbitControls for touch/mouse"
+    },
+    "medical_formats": {
+      "parser": "Cornerstone.js",
+      "formats": ["DICOM P10", "JPEG", "PNG"]
+    },
+    "frontend": {
+      "framework": "React 18+",
+      "styling": "TailwindCSS",
+      "components": "shadcn/ui",
+      "icons": "Lucide React",
+      "state": "Zustand or React Context"
+    }
+  },
+  "design_system": {
+    "philosophy": "Clean, clinical, medical-grade trustworthiness",
+    "colors": {
+      "primary_accent": "#2563EB (Blue - healthcare trust)",
+      "background": "#FFFFFF",
+      "surface": "#F9FAFB",
+      "text_primary": "#111827",
+      "text_secondary": "#6B7280",
+      "text_tertiary": "#9CA3AF",
+      "borders": "#E5E7EB",
+      "error": "#EF4444",
+      "success": "#10B981"
+    },
+    "spacing": "8px grid system",
+    "typography": {
+      "font_heading": "Inter or system-ui",
+      "font_body": "Inter or system-ui",
+      "body_min": "16px",
+      "line_height": "1.5-1.6"
+    },
+    "components": {
+      "border_radius_small": "4px",
+      "border_radius_medium": "8px",
+      "border_radius_large": "16px",
+      "shadow_light": "0 1px 3px rgba(0,0,0,0.1)",
+      "shadow_medium": "0 4px 6px rgba(0,0,0,0.1)",
+      "touch_target_min": "44px"
+    }
+  },
+  "regulatory_compliance": {
+    "fda_classification": "Class I (Exempt) - Medical Image Communication Device",
+    "positioning": "Patient Education and Engagement Only",
+    "required_disclaimers": [
+      "Not for Diagnostic Use",
+      "AI-Generated Visualization",
+      "Educational purposes only",
+      "Consult physician for medical interpretation"
+    ],
+    "hipaa": {
+      "strategy": "Zero-Knowledge Architecture",
+      "data_residency": "All processing local - PHI never transmitted",
+      "baa_requirement": "Reduced - only for app hosting, not data storage"
+    }
+  },
+  "performance_targets": {
+    "inference_latency": {
+      "webgpu": "<1.5 seconds",
+      "wasm_fallback": "<5 seconds"
+    },
+    "frame_rate": "30-60 FPS on iPhone 13+",
+    "model_cache": "Browser Cache API",
+    "memory_limits": {
+      "ios_safari_canvas": "288-384MB",
+      "max_texture": "2048x2048"
+    }
+  },
+  "architecture_decisions": {
+    "adr_001": {
+      "title": "Client-Side Only Processing",
+      "decision": "All AI inference runs in browser",
+      "rationale": "HIPAA compliance, zero server cost, privacy"
+    },
+    "adr_002": {
+      "title": "WebGPU Primary with WASM Fallback",
+      "decision": "Feature detection with graceful degradation",
+      "rationale": "Maximum device compatibility"
+    },
+    "adr_003": {
+      "title": "React Three Fiber for 3D",
+      "decision": "R3F over vanilla Three.js",
+      "rationale": "Declarative, React state integration"
+    },
+    "adr_004": {
+      "title": "Resolution Capping",
+      "decision": "518x518 inference, shader upscaling",
+      "rationale": "iOS Safari memory limits"
+    }
+  },
+  "implementation_phases": {
+    "phase_1_mvp": {
+      "target": "Q2 2025",
+      "features": [
+        "JPEG/PNG upload",
+        "WebGPU/WASM inference",
+        "Basic 3D viewer with OrbitControls",
+        "Mobile responsive",
+        "Depth intensity slider"
+      ],
+      "status": "not_started"
+    },
+    "phase_2_clinical": {
+      "target": "Q3 2025",
+      "features": [
+        "DICOM P10 support",
+        "Annotation tools",
+        "PDF report generation",
+        "Camera capture for film X-rays"
+      ],
+      "status": "not_started"
+    },
+    "phase_3_integration": {
+      "target": "Q4 2025",
+      "features": [
+        "EHR Integration (SMART on FHIR)",
+        "Video depth for ultrasound",
+        "Secure sharing links"
+      ],
+      "status": "not_started"
+    }
+  },
+  "functional_requirements": {
+    "P0_critical": [
+      "FR-01: Multi-format upload (JPEG, PNG, DICOM)",
+      "FR-02: Client-side DICOM parsing",
+      "FR-04: Depth estimation via Depth-Anything-V2-Small",
+      "FR-05: WebGPU hardware acceleration",
+      "FR-06: WASM fallback",
+      "FR-08: Displacement mesh rendering",
+      "FR-09: Orbit/Pan/Zoom controls"
+    ],
+    "P1_important": [
+      "FR-03: Mobile camera capture",
+      "FR-07: Inference progress indicator",
+      "FR-10: Depth intensity slider"
+    ],
+    "P2_nice_to_have": [
+      "FR-11: View reset button",
+      "FR-12: Annotation tools",
+      "FR-13: Secure export/sharing"
+    ]
+  },
+  "risks_and_mitigations": {
+    "depth_hallucination": {
+      "impact": "Medium",
+      "mitigation": "Prominent disclaimers, provider training"
+    },
+    "browser_incompatibility": {
+      "impact": "High",
+      "mitigation": "Robust WASM fallback, feature detection"
+    },
+    "memory_crashes": {
+      "impact": "High",
+      "mitigation": "Resolution capping, aggressive disposal, context recovery"
+    },
+    "battery_drain": {
+      "impact": "Low",
+      "mitigation": "Single inference, idle render loop pause"
+    }
+  },
+  "learned_insights": [
+    "First-principles breakdown: Input (2D pixels) → Process (AI depth) → Output (3D mesh)",
+    "WebGPU is primary target with 100x speedup over WASM, but WASM fallback essential for iOS",
+    "iOS Safari canvas memory limit (288-384MB) is critical constraint - must cap textures at 2048x2048",
+    "Model input size is fixed at 518x518 - resize all images before inference",
+    "ImageNet normalization required: mean=[0.485,0.456,0.406], std=[0.229,0.224,0.225]",
+    "React Three Fiber preferred over vanilla Three.js for declarative state integration"
+  ],
+  "decisions_made": [
+    "ADR-001: 100% client-side processing for HIPAA compliance",
+    "ADR-002: Next.js 14 with App Router for optimal caching and SSG",
+    "ADR-003: Zustand over Redux for minimal boilerplate",
+    "ADR-004: Feature-based folder structure with colocation",
+    "ADR-005: Medical blue (#2563EB) as single accent color per design guidelines"
+  ],
+  "blockers_encountered": [],
+  "code_patterns": {
+    "component_structure": "Feature-based folders with colocation",
+    "state_management": "Local state + Zustand for global",
+    "error_handling": "Error boundaries + try-catch for async"
+  },
+  "file_structure_planned": {
+    "src/": {
+      "components/": "Reusable UI components",
+      "features/": {
+        "upload/": "Image upload and DICOM parsing",
+        "inference/": "AI model loading and depth estimation",
+        "viewer/": "3D visualization and controls"
+      },
+      "hooks/": "Custom React hooks",
+      "lib/": "Utilities and helpers",
+      "stores/": "Zustand stores",
+      "styles/": "Global styles and Tailwind config"
+    }
+  },
+  "session_history": [
+    {
+      "session": 1,
+      "date": "2024-12-14",
+      "summary": "Phase 0 COMPLETE - Full architecture planning and documentation",
+      "key_decisions": [
+        "Next.js 14 + TypeScript + App Router",
+        "ONNX Runtime Web with WebGPU primary, WASM fallback",
+        "React Three Fiber for 3D",
+        "Zustand for state",
+        "Feature-based folder structure"
+      ],
+      "files_created": [
+        "context-medical.json",
+        "progress_update.md", 
+        "docs/technical_architecture.md",
+        "docs/implementation_plan.md",
+        "docs/execution_roadmap.md"
+      ],
+      "next_steps": [
+        "Initialize Next.js project",
+        "Install dependencies (R3F, ONNX, Zustand, shadcn)",
+        "Configure Tailwind with medical design colors",
+        "Create layout components"
+      ]
+    },
+    {
+      "session": 2,
+      "date": "2024-12-14",
+      "summary": "Day 1 COMPLETE - Project scaffolding and full UI shell",
+      "key_decisions": [
+        "Used Inter font for clean medical UI",
+        "Medical blue #2563EB as primary accent",
+        "Sections pattern for page organization",
+        "Zustand store with proper URL cleanup"
+      ],
+      "files_created": [
+        "src/components/layout/Header.tsx",
+        "src/components/layout/Footer.tsx",
+        "src/components/layout/PrivacyBadge.tsx",
+        "src/components/common/DisclaimerBanner.tsx",
+        "src/stores/useAppStore.ts",
+        "src/app/sections/HeroSection.tsx",
+        "src/app/sections/UploadSection.tsx",
+        "src/app/sections/ViewerSection.tsx"
+      ],
+      "next_steps": [
+        "Set up ONNX Runtime Web integration",
+        "Create WebGPU/WASM detection",
+        "Implement model loading with caching",
+        "Create depth estimation pipeline"
+      ]
+    },
+    {
+      "session": 3,
+      "date": "2024-12-14",
+      "summary": "Day 5-6 COMPLETE - ONNX Runtime & Depth Estimation Pipeline",
+      "key_decisions": [
+        "WebGPU primary with auto-fallback to WASM",
+        "Model cached in Cache API for instant reload",
+        "ImageNet normalization for Depth Anything V2",
+        "InferenceProvider context for global state"
+      ],
+      "files_created": [
+        "src/lib/onnx/webgpu-detector.ts",
+        "src/lib/onnx/model-loader.ts",
+        "src/lib/onnx/tensor-utils.ts",
+        "src/features/inference/hooks/useOnnxRuntime.ts",
+        "src/features/inference/hooks/useDepthEstimation.ts",
+        "src/features/inference/components/InferenceProvider.tsx",
+        "src/features/inference/components/ModelStatus.tsx",
+        "src/app/sections/InferenceSection.tsx",
+        "src/app/providers.tsx",
+        "docs/pending_items.md"
+      ],
+      "next_steps": [
+        "Set up React Three Fiber Canvas",
+        "Create DepthMesh component with displacement",
+        "Implement OrbitControls for interaction",
+        "Add lighting and materials"
+      ]
+    },
+    {
+      "session": 4,
+      "date": "2024-12-14",
+      "summary": "Day 8-9 COMPLETE - Full 3D Viewer with React Three Fiber",
+      "key_decisions": [
+        "Lazy loading for Viewer3D to reduce bundle size",
+        "DataTexture with Uint8 for depth map",
+        "256x256 geometry segments for smooth displacement",
+        "ACES filmic tone mapping for better colors",
+        "preserveDrawingBuffer for screenshot support"
+      ],
+      "files_created": [
+        "src/features/viewer/hooks/useMemoryManager.ts",
+        "src/features/viewer/hooks/useViewerState.ts",
+        "src/features/viewer/hooks/useKeyboardShortcuts.ts",
+        "src/features/viewer/components/Viewer3D.tsx",
+        "src/features/viewer/components/DepthMesh.tsx",
+        "src/features/viewer/components/ViewerLighting.tsx",
+        "src/features/viewer/components/CameraController.tsx",
+        "src/features/viewer/components/ViewerControls.tsx",
+        "src/features/viewer/components/ViewerErrorBoundary.tsx",
+        "src/features/viewer/components/KeyboardShortcutsHelp.tsx",
+        "src/features/viewer/components/DepthColorMode.tsx",
+        "src/features/viewer/utils/screenshot.ts"
+      ],
+      "next_steps": [
+        "iOS Safari memory optimization",
+        "Touch gesture refinement",
+        "Final polish and error handling",
+        "Deployment to production"
+      ]
+    },
+    {
+      "session": 5,
+      "date": "2024-12-14",
+      "summary": "Day 12-14 + Phase 2 COMPLETE - Mobile Optimization & All Clinical Features",
+      "key_decisions": [
+        "dicom-parser for DICOM P10 file parsing",
+        "Window/level adjustment for medical images",
+        "MediaDevices API for camera capture",
+        "Canvas-based annotation system",
+        "HTML-based PDF reports for cross-platform"
+      ],
+      "files_created": [
+        "src/lib/utils/device-detection.ts",
+        "src/features/viewer/hooks/useContextRecovery.ts",
+        "src/components/common/LoadingSkeleton.tsx",
+        "src/components/common/MemoryWarning.tsx",
+        "src/components/common/PageTransition.tsx",
+        "src/features/dicom/hooks/useDicomParser.ts",
+        "src/features/dicom/components/DicomUploader.tsx",
+        "src/features/dicom/components/DicomMetadataPanel.tsx",
+        "src/features/camera/hooks/useCamera.ts",
+        "src/features/camera/components/CameraCapture.tsx",
+        "src/features/annotation/hooks/useAnnotation.ts",
+        "src/features/annotation/components/AnnotationCanvas.tsx",
+        "src/features/annotation/components/AnnotationToolbar.tsx",
+        "src/features/export/utils/pdf-generator.ts",
+        "src/features/export/components/ExportDialog.tsx"
+      ],
+      "next_steps": [
+        "Phase 3: SMART on FHIR integration",
+        "Phase 3: Video depth estimation",
+        "Phase 3: Secure sharing links",
+        "Production deployment"
+      ]
+    },
+    {
+      "session": 6,
+      "date": "2024-12-14",
+      "summary": "Phase 3 COMPLETE - EHR Integration, Video Support, Secure Sharing",
+      "key_decisions": [
+        "OAuth2 PKCE flow for SMART on FHIR security",
+        "LZ-string compression for URL-based sharing",
+        "Canvas-based video frame extraction",
+        "LocalStorage with 24-hour expiry for sessions"
+      ],
+      "files_created": [
+        "src/features/fhir/types/index.ts",
+        "src/features/fhir/utils/smart-auth.ts",
+        "src/features/fhir/utils/fhir-client.ts",
+        "src/features/fhir/hooks/useFhirContext.ts",
+        "src/features/fhir/components/FhirLauncher.tsx",
+        "src/features/fhir/components/PatientBanner.tsx",
+        "src/features/video/hooks/useVideoProcessor.ts",
+        "src/features/video/components/VideoPlayer.tsx",
+        "src/features/sharing/utils/encoder.ts",
+        "src/features/sharing/utils/qr-generator.ts",
+        "src/features/sharing/hooks/useSharing.ts",
+        "src/features/sharing/components/ShareDialog.tsx",
+        "src/features/session/utils/storage.ts",
+        "src/features/session/hooks/useSessionPersistence.ts",
+        "src/features/session/components/SessionRestorePrompt.tsx"
+      ],
+      "next_steps": [
+        "Production deployment",
+        "User acceptance testing",
+        "Documentation finalization"
+      ]
+    }
+  ]
+}

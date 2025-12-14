@@ -1,0 +1,190 @@
+import type { TranslationKeys } from './en';
+
+export const es: TranslationKeys = {
+  common: {
+    loading: 'Cargando...',
+    error: 'Error',
+    success: 'Éxito',
+    cancel: 'Cancelar',
+    confirm: 'Confirmar',
+    save: 'Guardar',
+    delete: 'Eliminar',
+    edit: 'Editar',
+    close: 'Cerrar',
+    back: 'Atrás',
+    next: 'Siguiente',
+    retry: 'Reintentar',
+    reset: 'Restablecer',
+  },
+  
+  header: {
+    title: 'MedVis3D',
+    subtitle: 'Visualización de Imágenes Médicas',
+  },
+  
+  privacy: {
+    badge: 'Procesamiento en Dispositivo',
+    description: 'Tus datos nunca salen de tu dispositivo',
+  },
+  
+  hero: {
+    title: 'Visualización de Imágenes Médicas con IA',
+    subtitle: 'Transforma imágenes médicas 2D en visualizaciones 3D interactivas usando tecnología de IA de vanguardia.',
+    feature1: 'Privacidad Primero',
+    feature1Desc: 'Todo el procesamiento ocurre en tu dispositivo',
+    feature2: 'Aceleración GPU',
+    feature2Desc: 'Impulsado por WebGPU para inferencia rápida',
+    feature3: 'Listo para Móvil',
+    feature3Desc: 'Funciona en cualquier dispositivo moderno',
+  },
+  
+  upload: {
+    title: 'Subir Imagen Médica',
+    dropzone: 'Suelta tu imagen médica aquí',
+    supported: 'Soporta formatos JPEG, PNG y DICOM',
+    selectFile: 'Seleccionar Archivo',
+    selectImage: 'Seleccionar Imagen',
+    useCamera: 'Usar Cámara',
+    dicomFile: 'Archivo DICOM',
+    ready: 'Listo para visualización 3D',
+    processing: 'Procesando...',
+    generate: 'Generar Vista 3D',
+  },
+  
+  camera: {
+    title: 'Captura de Cámara',
+    description: 'Toma una foto de una radiografía o imagen médica en un negatoscopio',
+    openCamera: 'Abrir Cámara',
+    capture: 'Capturar',
+    retake: 'Repetir',
+    usePhoto: 'Usar Esta Foto',
+    switchCamera: 'Cambiar Cámara',
+    requesting: 'Solicitando Acceso a Cámara...',
+    allowPrompt: 'Por favor permite el acceso a la cámara cuando se solicite',
+    positionGuide: 'Posiciona la radiografía dentro del marco y toca para capturar',
+    error: 'Error de Cámara',
+  },
+  
+  inference: {
+    title: 'Modelo de IA',
+    loadModel: 'Cargar Modelo de IA',
+    loading: 'Cargando modelo...',
+    ready: 'Modelo Listo',
+    generate: 'Generar Vista 3D',
+    generating: 'Generando...',
+    backend: 'Backend',
+    webgpu: 'WebGPU',
+    wasm: 'WebAssembly',
+    cached: 'En Caché',
+    downloadProgress: 'Descargando modelo',
+  },
+  
+  viewer: {
+    title: 'Visor 3D',
+    placeholder: 'Vista Previa 3D',
+    uploadPrompt: 'Sube una imagen para comenzar',
+    generatePrompt: 'Haz clic en "Generar Vista 3D" para crear la visualización',
+    depthIntensity: 'Intensidad de Profundidad',
+    resetView: 'Restablecer Vista',
+    fullscreen: 'Pantalla Completa',
+    exitFullscreen: 'Salir de Pantalla Completa',
+    wireframe: 'Malla de Alambre',
+    textured: 'Texturizado',
+    screenshot: 'Captura de Pantalla',
+    contextLost: 'Contexto gráfico perdido. Por favor recarga la página.',
+  },
+  
+  controls: {
+    play: 'Reproducir',
+    pause: 'Pausar',
+    stop: 'Detener',
+    skipBack: 'Anterior',
+    skipForward: 'Siguiente',
+    speed: 'Velocidad',
+  },
+  
+  export: {
+    title: 'Opciones de Exportación',
+    screenshot: 'Captura 3D',
+    screenshotDesc: 'Guardar vista 3D actual como PNG',
+    report: 'Exportar Informe',
+    reportDesc: 'Descargar análisis como informe HTML',
+    print: 'Imprimir Informe',
+    printDesc: 'Abrir diálogo de impresión',
+    disclaimer: 'Todas las exportaciones incluyen el aviso de uso educativo',
+  },
+  
+  share: {
+    title: 'Compartir Visualización',
+    generating: 'Generando enlace para compartir...',
+    scanQR: 'Escanea para ver en otro dispositivo',
+    shareLink: 'Enlace para Compartir',
+    copy: 'Copiar',
+    copied: 'Copiado',
+    saveQR: 'Guardar Código QR',
+    expiry: 'Los enlaces expiran después de 24 horas. No compartas información médica protegida.',
+    unable: 'No se Puede Compartir',
+  },
+  
+  dicom: {
+    title: 'Metadatos DICOM',
+    patientId: 'ID de Paciente',
+    studyDate: 'Fecha de Estudio',
+    modality: 'Modalidad',
+    study: 'Estudio',
+    series: 'Serie',
+    dimensions: 'Dimensiones',
+    bits: 'Bits',
+    window: 'Ventana',
+    parsing: 'Analizando archivo DICOM...',
+    success: 'DICOM Cargado Exitosamente',
+    error: 'Error al Analizar DICOM',
+    loadAnother: 'Cargar Otro',
+    multiframe: 'Visor DICOM Multicuadro',
+    multiframeDesc: 'Carga archivos DICOM cine o 4D para ver y seleccionar cuadros',
+  },
+  
+  fhir: {
+    title: 'Conectar a EHR',
+    description: 'Iniciar desde Epic, Cerner o sandbox SMART',
+    launch: 'Iniciar SMART',
+    connecting: 'Conectando a EHR...',
+    connected: 'EHR Conectado',
+    patient: 'Paciente',
+    disconnect: 'Desconectar',
+    failed: 'Conexión Fallida',
+  },
+  
+  session: {
+    restore: '¿Reanudar Sesión Anterior?',
+    restoreDesc: 'Tienes una sesión no guardada de',
+    dismiss: 'Descartar',
+    restoreBtn: 'Restaurar',
+  },
+  
+  disclaimer: {
+    title: 'Solo para Uso Educativo',
+    text: 'Esta visualización generada por IA es solo para fines educativos. NO está destinada para diagnóstico médico o toma de decisiones clínicas. La estimación de profundidad puede no reflejar con precisión las estructuras anatómicas reales. Siempre consulte a profesionales de la salud calificados para la interpretación médica.',
+    short: 'Solo para fines educativos. No para uso diagnóstico.',
+  },
+  
+  keyboard: {
+    title: 'Atajos de Teclado',
+    reset: 'Restablecer vista',
+    wireframe: 'Alternar malla',
+    fullscreen: 'Alternar pantalla completa',
+    screenshot: 'Guardar captura',
+    depth: 'Ajustar profundidad',
+    escape: 'Salir de pantalla completa',
+  },
+  
+  errors: {
+    generic: 'Ocurrió un error',
+    networkError: 'Error de red. Por favor verifica tu conexión.',
+    fileInvalid: 'Formato de archivo inválido',
+    fileTooLarge: 'El tamaño del archivo debe ser menor a 50MB',
+    cameraNotSupported: 'Cámara no soportada en este navegador',
+    webglContextLost: 'Contexto gráfico perdido',
+    modelLoadFailed: 'Error al cargar modelo de IA',
+  },
+};

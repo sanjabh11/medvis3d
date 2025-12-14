@@ -1,0 +1,190 @@
+export const en = {
+  common: {
+    loading: 'Loading...',
+    error: 'Error',
+    success: 'Success',
+    cancel: 'Cancel',
+    confirm: 'Confirm',
+    save: 'Save',
+    delete: 'Delete',
+    edit: 'Edit',
+    close: 'Close',
+    back: 'Back',
+    next: 'Next',
+    retry: 'Retry',
+    reset: 'Reset',
+  },
+  
+  header: {
+    title: 'MedVis3D',
+    subtitle: 'Medical Image Visualization',
+  },
+  
+  privacy: {
+    badge: 'Device-Side Processing',
+    description: 'Your data never leaves your device',
+  },
+  
+  hero: {
+    title: 'AI-Powered Medical Image Visualization',
+    subtitle: 'Transform 2D medical images into interactive 3D visualizations using cutting-edge AI technology.',
+    feature1: 'Privacy First',
+    feature1Desc: 'All processing happens on your device',
+    feature2: 'GPU Accelerated',
+    feature2Desc: 'WebGPU powered for fast inference',
+    feature3: 'Mobile Ready',
+    feature3Desc: 'Works on any modern device',
+  },
+  
+  upload: {
+    title: 'Upload Medical Image',
+    dropzone: 'Drop your medical image here',
+    supported: 'Supports JPEG, PNG, and DICOM formats',
+    selectFile: 'Select File',
+    selectImage: 'Select Image',
+    useCamera: 'Use Camera',
+    dicomFile: 'DICOM File',
+    ready: 'Ready for 3D visualization',
+    processing: 'Processing...',
+    generate: 'Generate 3D View',
+  },
+  
+  camera: {
+    title: 'Camera Capture',
+    description: 'Take a photo of an X-ray or medical image on a light box',
+    openCamera: 'Open Camera',
+    capture: 'Capture',
+    retake: 'Retake',
+    usePhoto: 'Use This Photo',
+    switchCamera: 'Switch Camera',
+    requesting: 'Requesting Camera Access...',
+    allowPrompt: 'Please allow camera access when prompted',
+    positionGuide: 'Position the X-ray within the frame and tap to capture',
+    error: 'Camera Error',
+  },
+  
+  inference: {
+    title: 'AI Model',
+    loadModel: 'Load AI Model',
+    loading: 'Loading model...',
+    ready: 'Model Ready',
+    generate: 'Generate 3D View',
+    generating: 'Generating...',
+    backend: 'Backend',
+    webgpu: 'WebGPU',
+    wasm: 'WebAssembly',
+    cached: 'Cached',
+    downloadProgress: 'Downloading model',
+  },
+  
+  viewer: {
+    title: '3D Viewer',
+    placeholder: '3D Preview',
+    uploadPrompt: 'Upload an image to get started',
+    generatePrompt: 'Click "Generate 3D View" to create visualization',
+    depthIntensity: 'Depth Intensity',
+    resetView: 'Reset View',
+    fullscreen: 'Fullscreen',
+    exitFullscreen: 'Exit Fullscreen',
+    wireframe: 'Wireframe',
+    textured: 'Textured',
+    screenshot: 'Screenshot',
+    contextLost: 'Graphics context lost. Please refresh the page.',
+  },
+  
+  controls: {
+    play: 'Play',
+    pause: 'Pause',
+    stop: 'Stop',
+    skipBack: 'Previous',
+    skipForward: 'Next',
+    speed: 'Speed',
+  },
+  
+  export: {
+    title: 'Export Options',
+    screenshot: '3D Screenshot',
+    screenshotDesc: 'Save current 3D view as PNG',
+    report: 'Export Report',
+    reportDesc: 'Download analysis as HTML report',
+    print: 'Print Report',
+    printDesc: 'Open print dialog',
+    disclaimer: 'All exports include the educational use disclaimer',
+  },
+  
+  share: {
+    title: 'Share Visualization',
+    generating: 'Generating share link...',
+    scanQR: 'Scan to view on another device',
+    shareLink: 'Share Link',
+    copy: 'Copy',
+    copied: 'Copied',
+    saveQR: 'Save QR Code',
+    expiry: 'Links expire after 24 hours. Do not share PHI.',
+    unable: 'Unable to Share',
+  },
+  
+  dicom: {
+    title: 'DICOM Metadata',
+    patientId: 'Patient ID',
+    studyDate: 'Study Date',
+    modality: 'Modality',
+    study: 'Study',
+    series: 'Series',
+    dimensions: 'Dimensions',
+    bits: 'Bits',
+    window: 'Window',
+    parsing: 'Parsing DICOM file...',
+    success: 'DICOM Loaded Successfully',
+    error: 'Failed to Parse DICOM',
+    loadAnother: 'Load Another',
+    multiframe: 'Multi-frame DICOM Viewer',
+    multiframeDesc: 'Load cine or 4D DICOM files to view and select frames',
+  },
+  
+  fhir: {
+    title: 'Connect to EHR',
+    description: 'Launch from Epic, Cerner, or SMART sandbox',
+    launch: 'Launch SMART',
+    connecting: 'Connecting to EHR...',
+    connected: 'EHR Connected',
+    patient: 'Patient',
+    disconnect: 'Disconnect',
+    failed: 'Connection Failed',
+  },
+  
+  session: {
+    restore: 'Resume Previous Session?',
+    restoreDesc: 'You have an unsaved session from',
+    dismiss: 'Dismiss',
+    restoreBtn: 'Restore',
+  },
+  
+  disclaimer: {
+    title: 'Educational Use Only',
+    text: 'This AI-generated visualization is for educational purposes only. It is NOT intended for medical diagnosis or clinical decision-making. The depth estimation may not accurately reflect actual anatomical structures. Always consult qualified healthcare professionals for medical interpretation.',
+    short: 'For educational purposes only. Not for diagnostic use.',
+  },
+  
+  keyboard: {
+    title: 'Keyboard Shortcuts',
+    reset: 'Reset view',
+    wireframe: 'Toggle wireframe',
+    fullscreen: 'Toggle fullscreen',
+    screenshot: 'Save screenshot',
+    depth: 'Adjust depth',
+    escape: 'Exit fullscreen',
+  },
+  
+  errors: {
+    generic: 'An error occurred',
+    networkError: 'Network error. Please check your connection.',
+    fileInvalid: 'Invalid file format',
+    fileTooLarge: 'File size must be under 50MB',
+    cameraNotSupported: 'Camera not supported in this browser',
+    webglContextLost: 'Graphics context lost',
+    modelLoadFailed: 'Failed to load AI model',
+  },
+};
+
+export type TranslationKeys = typeof en;
