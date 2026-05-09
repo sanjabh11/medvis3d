@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { Play, Pause, SkipBack, SkipForward, Camera, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -16,7 +16,6 @@ export function VideoPlayer({ onFrameExtracted, className }: VideoPlayerProps) {
   const {
     status,
     error,
-    videoUrl,
     totalFrames,
     currentFrameIndex,
     fps,
@@ -56,20 +55,6 @@ export function VideoPlayer({ onFrameExtracted, className }: VideoPlayerProps) {
   const handleSkipForward = useCallback(() => {
     seekToFrame(Math.min(totalFrames - 1, currentFrameIndex + fps));
   }, [currentFrameIndex, totalFrames, fps, seekToFrame]);
-
-  // Update frame index on time update
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const handleTimeUpdate = () => {
-      const frameIndex = Math.floor(video.currentTime * fps);
-      // Update is handled internally
-    };
-
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    return () => video.removeEventListener('timeupdate', handleTimeUpdate);
-  }, [fps, videoRef]);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);

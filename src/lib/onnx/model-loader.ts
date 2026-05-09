@@ -1,9 +1,80 @@
 import * as ort from 'onnxruntime-web';
 
+ort.env.logLevel = 'error';
+
 // Use HuggingFace CDN for the ONNX model (95MB)
 const MODEL_URL = 'https://huggingface.co/onnx-community/depth-anything-v2-small/resolve/main/onnx/model.onnx';
 const CACHE_NAME = 'medvis3d-models-v2';
 const MODEL_SIZE_BYTES = 99 * 1024 * 1024; // ~99MB
+
+export type DepthModelProfile = {
+  id: 'fast-browser' | 'compact-browser' | 'quality-browser' | 'research-server';
+  label: string;
+  modelName: string;
+  provider: string;
+  status: 'default' | 'planned' | 'research';
+  sizeLabel: string;
+  privacyMode: 'browser' | 'server';
+  note: string;
+};
+
+export const DEPTH_MODEL_PROFILES: DepthModelProfile[] = [
+  {
+    id: 'fast-browser',
+    label: 'Fast browser model',
+    modelName: 'Depth Anything V2 Small ONNX',
+    provider: 'Hugging Face onnx-community/depth-anything-v2-small',
+    status: 'default',
+    sizeLabel: '~99MB',
+    privacyMode: 'browser',
+    note: 'Default local-browser inference path for the educational 3D builder.',
+  },
+  {
+    id: 'compact-browser',
+    label: 'Compact browser model',
+    modelName: 'Depth Anything V2 Small quantized ONNX',
+    provider: 'Hugging Face ONNX community variants',
+    status: 'planned',
+    sizeLabel: '~18-30MB target',
+    privacyMode: 'browser',
+    note: 'Planned after local quality and browser compatibility verification.',
+  },
+  {
+    id: 'quality-browser',
+    label: 'Quality browser model',
+    modelName: 'Larger Depth Anything V2 ONNX variant',
+    provider: 'Depth Anything V2 family',
+    status: 'planned',
+    sizeLabel: 'large download',
+    privacyMode: 'browser',
+    note: 'Optional quality path only if load size and licensing are acceptable.',
+  },
+  {
+    id: 'research-server',
+    label: 'Research/server model',
+    modelName: 'Depth Pro, Metric3D, Marigold, VGGT, or MedSAM2',
+    provider: 'Experimental backend pipeline',
+    status: 'research',
+    sizeLabel: 'server GPU',
+    privacyMode: 'server',
+    note: 'Not enabled by default; requires explicit consent and non-diagnostic labeling.',
+  },
+];
+
+export const DEPTH_MODEL_INFO = {
+  name: 'Depth Anything V2 Small ONNX',
+  provider: 'Hugging Face onnx-community/depth-anything-v2-small',
+  variantLabel: 'Fast browser model',
+  url: MODEL_URL,
+  sizeLabel: '~99MB',
+  cacheName: CACHE_NAME,
+  notice:
+    'Image pixels stay in this browser. The model weights are downloaded from Hugging Face on first load unless already cached locally.',
+} as const;
+
+export function getDepthModelProfile(id: DepthModelProfile['id']): DepthModelProfile {
+  return DEPTH_MODEL_PROFILES.find((profile) => profile.id === id) || DEPTH_MODEL_PROFILES[0];
+}
 
 export type ModelLoadProgress = {
   stage: 'checking-cache' | 'downloading' | 'creating-session' | 'ready' | 'error';
@@ -154,6 +225,7 @@ export async function loadDepthModel(
     const session = await ort.InferenceSession.create(modelBuffer, {
       executionProviders,
       graphOptimizationLevel: 'all',
+      logSeverityLevel: 3,
     });
 
     onProgress({

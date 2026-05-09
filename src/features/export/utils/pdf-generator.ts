@@ -1,68 +1,171 @@
-export interface PdfReportData {
+import type { Annotation } from '@/features/annotation';
+import type { ConsultContext, VisualizationFacts } from '@/features/builder';
+
+export interface ConsultSnapshotData {
   title: string;
   date: string;
-  originalImageUrl: string;
+  originalImageUrl?: string;
+  enhancedImageUrl?: string;
   depthMapUrl?: string;
   viewer3DUrl?: string;
   notes?: string;
+  patientQuestion?: string;
+  consultContext?: ConsultContext;
+  visualizationFacts?: VisualizationFacts | null;
+  annotations?: Annotation[];
   disclaimer: string;
 }
 
-export async function generatePdfReport(data: PdfReportData): Promise<Blob> {
-  // For now, create a simple HTML-based "PDF" that can be printed
-  // In production, you'd use a library like jspdf or pdf-lib
-  
+export type PdfReportData = ConsultSnapshotData;
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function sanitizeImageSrc(value: string): string {
+  const allowed = /^(blob:|data:image\/(?:png|jpeg|jpg|webp);base64,|\/)/i;
+  return allowed.test(value) ? escapeHtml(value) : '';
+}
+
+function renderImageSection(title: string, src?: string, alt?: string): string {
+  const safeSrc = src ? sanitizeImageSrc(src) : '';
+  if (!safeSrc) return '';
+
+  return `
+  <div class="section">
+    <h2>${escapeHtml(title)}</h2>
+    <div class="image-container">
+      <img src="${safeSrc}" alt="${escapeHtml(alt || title)}" />
+    </div>
+  </div>`;
+}
+
+function renderFact(label: string, value?: string): string {
+  if (!value) return '';
+  return `
+    <div class="fact">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+    </div>`;
+}
+
+function renderAnnotations(annotations?: Annotation[]): string {
+  if (!annotations?.length) {
+    return '<p>No consult annotations were added.</p>';
+  }
+
+  return `
+    <ul>
+      ${annotations.map((annotation, index) => `
+        <li>
+          ${index + 1}. ${escapeHtml(annotation.type)}
+          ${annotation.text ? `- ${escapeHtml(annotation.text)}` : ''}
+        </li>
+      `).join('')}
+    </ul>`;
+}
+
+export async function generateConsultSnapshot(data: ConsultSnapshotData): Promise<Blob> {
+  const title = escapeHtml(data.title);
+  const date = escapeHtml(data.date);
+  const notes = data.notes ? escapeHtml(data.notes) : '';
+  const patientQuestion = data.patientQuestion ? escapeHtml(data.patientQuestion) : '';
+  const disclaimer = escapeHtml(data.disclaimer);
+  const context = data.consultContext;
+  const facts = data.visualizationFacts;
+
   const html = `
 <!DOCTYPE html>
 <html>
 <head>
-  <title>${data.title}</title>
+  <title>${title}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      max-width: 800px;
+      max-width: 860px;
       margin: 0 auto;
       padding: 40px;
       color: #111827;
+      background: #ffffff;
     }
     .header {
-      text-align: center;
-      margin-bottom: 40px;
+      margin-bottom: 32px;
       padding-bottom: 20px;
       border-bottom: 2px solid #2563EB;
     }
     .header h1 {
-      color: #2563EB;
-      margin: 0 0 10px 0;
+      color: #1D4ED8;
+      margin: 0 0 8px 0;
+      font-size: 28px;
     }
     .header p {
       color: #6B7280;
       margin: 0;
+      line-height: 1.5;
     }
     .section {
-      margin-bottom: 30px;
+      margin-bottom: 28px;
     }
     .section h2 {
       font-size: 18px;
       color: #374151;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
+    }
+    .facts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+    }
+    .fact {
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+      padding: 10px;
+      background: #F9FAFB;
+    }
+    .fact span {
+      display: block;
+      color: #6B7280;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 4px;
+    }
+    .fact strong {
+      color: #111827;
+      font-size: 13px;
     }
     .image-container {
       text-align: center;
-      margin: 20px 0;
+      margin: 16px 0;
     }
     .image-container img {
       max-width: 100%;
-      max-height: 400px;
+      max-height: 430px;
       border: 1px solid #E5E7EB;
       border-radius: 8px;
+      background: #F3F4F6;
+    }
+    .notice {
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      border-radius: 8px;
+      padding: 14px;
+      color: #1E40AF;
+      font-size: 13px;
+      line-height: 1.55;
     }
     .disclaimer {
       background: #FEF3C7;
       border: 1px solid #F59E0B;
       border-radius: 8px;
       padding: 15px;
-      margin-top: 40px;
+      margin-top: 34px;
     }
     .disclaimer h3 {
       color: #92400E;
@@ -73,62 +176,78 @@ export async function generatePdfReport(data: PdfReportData): Promise<Blob> {
       color: #92400E;
       margin: 0;
       font-size: 12px;
+      line-height: 1.55;
     }
     .footer {
       text-align: center;
-      margin-top: 40px;
-      padding-top: 20px;
+      margin-top: 36px;
+      padding-top: 18px;
       border-top: 1px solid #E5E7EB;
-      color: #9CA3AF;
+      color: #6B7280;
       font-size: 12px;
     }
     @media print {
       body { padding: 20px; }
-      .no-print { display: none; }
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>MedVis3D - Medical Image Analysis</h1>
-    <p>Generated: ${data.date}</p>
+    <h1>${title}</h1>
+    <p>Generated: ${date}</p>
+    <p>Patient identifiers and raw DICOM metadata are not included in this local snapshot.</p>
   </div>
 
   <div class="section">
-    <h2>Original Image</h2>
-    <div class="image-container">
-      <img src="${data.originalImageUrl}" alt="Original medical image" />
+    <h2>Consult Context</h2>
+    <div class="facts">
+      ${renderFact('Image type', context?.modality)}
+      ${renderFact('Body region', context?.bodyRegion)}
+      ${renderFact('Audience', context?.intendedAudience)}
+      ${renderFact('Review status', context?.reviewStatus)}
+      ${renderFact('Confidence', facts?.confidence)}
+      ${renderFact('Source', facts?.sourceType)}
+      ${renderFact('Enhancement', facts?.enhancementProfile)}
+      ${renderFact('Model', facts ? `${facts.modelName} ${facts.modelVariant}` : undefined)}
+      ${renderFact('Backend', facts?.backend)}
     </div>
   </div>
 
-  ${data.depthMapUrl ? `
   <div class="section">
-    <h2>Depth Analysis</h2>
-    <div class="image-container">
-      <img src="${data.depthMapUrl}" alt="Depth map visualization" />
+    <h2>Safety Boundary</h2>
+    <div class="notice">
+      Educational visualization only. This is not diagnostic interpretation, treatment guidance,
+      surgical planning, FDA-cleared AI, or PACS replacement.
     </div>
+  </div>
+
+  ${renderImageSection('3D Visualization', data.viewer3DUrl, '3D educational visualization')}
+  ${renderImageSection('Enhanced Image', data.enhancedImageUrl, 'Enhanced source image')}
+  ${renderImageSection('Source Image', data.originalImageUrl, 'Source image')}
+  ${renderImageSection('Depth Map', data.depthMapUrl, 'Depth map visualization')}
+
+  <div class="section">
+    <h2>Annotations</h2>
+    ${renderAnnotations(data.annotations)}
+  </div>
+
+  ${notes ? `
+  <div class="section">
+    <h2>Consult Notes</h2>
+    <p>${notes}</p>
   </div>
   ` : ''}
 
-  ${data.viewer3DUrl ? `
+  ${patientQuestion ? `
   <div class="section">
-    <h2>3D Visualization</h2>
-    <div class="image-container">
-      <img src="${data.viewer3DUrl}" alt="3D visualization" />
-    </div>
-  </div>
-  ` : ''}
-
-  ${data.notes ? `
-  <div class="section">
-    <h2>Notes</h2>
-    <p>${data.notes}</p>
+    <h2>Question For Clinician</h2>
+    <p>${patientQuestion}</p>
   </div>
   ` : ''}
 
   <div class="disclaimer">
-    <h3>⚠️ Important Disclaimer</h3>
-    <p>${data.disclaimer}</p>
+    <h3>Important Disclaimer</h3>
+    <p>${disclaimer}</p>
   </div>
 
   <div class="footer">
@@ -139,9 +258,11 @@ export async function generatePdfReport(data: PdfReportData): Promise<Blob> {
 </html>
   `;
 
-  // Create blob from HTML
-  const blob = new Blob([html], { type: 'text/html' });
-  return blob;
+  return new Blob([html], { type: 'text/html' });
+}
+
+export async function generatePdfReport(data: PdfReportData): Promise<Blob> {
+  return generateConsultSnapshot(data);
 }
 
 export function downloadReport(blob: Blob, filename: string): void {
@@ -163,6 +284,5 @@ export function printReport(blob: Blob): void {
       printWindow.print();
     };
   }
-  // Clean up after a delay
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 }

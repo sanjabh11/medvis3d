@@ -11,6 +11,9 @@ export interface ShareableSession {
 
 const SHARE_VERSION = 1;
 const MAX_URL_LENGTH = 8000; // Safe URL length limit
+export const URL_IMAGE_SHARING_ENABLED = false;
+export const URL_IMAGE_SHARING_DISABLED_REASON =
+  'PHI-safe URL sharing is disabled because medical image pixels must not be embedded in links, browser history, or server logs.';
 
 export function encodeSession(session: Omit<ShareableSession, 'version' | 'timestamp'>): string {
   const fullSession: ShareableSession = {
@@ -50,6 +53,10 @@ export function decodeSession(encoded: string): ShareableSession | null {
 }
 
 export function createShareUrl(session: Omit<ShareableSession, 'version' | 'timestamp'>): string {
+  if (!URL_IMAGE_SHARING_ENABLED) {
+    throw new Error(URL_IMAGE_SHARING_DISABLED_REASON);
+  }
+
   const encoded = encodeSession(session);
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
   return `${baseUrl}/share?data=${encoded}`;
@@ -81,6 +88,10 @@ export function isValidShareUrl(url: string): boolean {
 }
 
 export function canCreateShareUrl(imageDataUrl: string): boolean {
+  if (!URL_IMAGE_SHARING_ENABLED) {
+    return false;
+  }
+
   // Check if the resulting URL would be too long
   const testSession = {
     imageDataUrl,

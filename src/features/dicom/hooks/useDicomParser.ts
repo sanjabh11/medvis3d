@@ -19,7 +19,13 @@ export interface DicomMetadata {
   rescaleIntercept?: number;
   rescaleSlope?: number;
   photometricInterpretation?: string;
+  transferSyntaxUID?: string;
+  numberOfFrames?: number;
+  supportStatus?: DicomSupportStatus;
+  unsupportedReason?: string;
 }
+
+export type DicomSupportStatus = 'supported' | 'unsupported' | 'unknown';
 
 export interface DicomParseResult {
   imageData: ImageData | null;
@@ -54,6 +60,7 @@ function extractMetadata(dataSet: dicomParser.DataSet): DicomMetadata {
   return {
     patientName: getStringValue(dataSet, 'x00100010'),
     patientId: getStringValue(dataSet, 'x00100020'),
+    transferSyntaxUID: getStringValue(dataSet, 'x00020010'),
     studyDate: getStringValue(dataSet, 'x00080020'),
     modality: getStringValue(dataSet, 'x00080060'),
     studyDescription: getStringValue(dataSet, 'x00081030'),
@@ -67,6 +74,55 @@ function extractMetadata(dataSet: dicomParser.DataSet): DicomMetadata {
     rescaleIntercept: getNumberValue(dataSet, 'x00281052'),
     rescaleSlope: getNumberValue(dataSet, 'x00281053'),
     photometricInterpretation: getStringValue(dataSet, 'x00280004'),
+    numberOfFrames: getNumberValue(dataSet, 'x00280008'),
+  };
+}
+
+const SUPPORTED_TRANSFER_SYNTAXES = new Set([
+  '1.2.840.10008.1.2',
+  '1.2.840.10008.1.2.1',
+]);
+
+export function isSupportedTransferSyntax(transferSyntaxUID?: string): boolean {
+  if (!transferSyntaxUID) return true;
+  return SUPPORTED_TRANSFER_SYNTAXES.has(transferSyntaxUID.trim());
+}
+
+function getUnsupportedReason(metadata: DicomMetadata): string | undefined {
+  if (!isSupportedTransferSyntax(metadata.transferSyntaxUID)) {
+    return `Unsupported DICOM transfer syntax: ${metadata.transferSyntaxUID}. This browser demo currently supports uncompressed little-endian single-frame DICOM only.`;
+  }
+
+  if (metadata.numberOfFrames && metadata.numberOfFrames > 1) {
+    return `Unsupported multi-frame DICOM: ${metadata.numberOfFrames} frames detected. Use the later Cornerstone3D/DICOMweb path for stack or video workflows.`;
+  }
+
+  return undefined;
+}
+
+export function redactDicomMetadata(metadata: DicomMetadata): DicomMetadata {
+  const unsupportedReason = getUnsupportedReason(metadata);
+
+  return {
+    ...metadata,
+    patientName: undefined,
+    patientId: undefined,
+    supportStatus: unsupportedReason ? 'unsupported' : 'supported',
+    unsupportedReason,
+  };
+}
+
+function getSafeMetadataSummary(metadata: DicomMetadata) {
+  return {
+    modality: metadata.modality,
+    rows: metadata.rows,
+    columns: metadata.columns,
+    bitsAllocated: metadata.bitsAllocated,
+    bitsStored: metadata.bitsStored,
+    photometricInterpretation: metadata.photometricInterpretation,
+    transferSyntaxUID: metadata.transferSyntaxUID,
+    numberOfFrames: metadata.numberOfFrames,
+    supportStatus: metadata.supportStatus,
   };
 }
 
@@ -126,9 +182,15 @@ export function useDicomParser(): UseDicomParserReturn {
       // Parse DICOM file
       const dataSet = dicomParser.parseDicom(byteArray);
       
-      // Extract metadata
-      const metadata = extractMetadata(dataSet);
-      console.log('[DICOM] Metadata:', metadata);
+      // Extract metadata, then remove direct identifiers before storing or logging.
+      const metadata = redactDicomMetadata(extractMetadata(dataSet));
+      if (process.env.NODE_ENV !== 'production') {
+        console.info('[DICOM] Parsed image summary:', getSafeMetadataSummary(metadata));
+      }
+
+      if (metadata.unsupportedReason) {
+        throw new Error(metadata.unsupportedReason);
+      }
 
       // Get pixel data
       const pixelDataElement = dataSet.elements.x7fe00010;
@@ -164,7 +226,6 @@ export function useDicomParser(): UseDicomParserReturn {
 
       setResult(parseResult);
       setStatus('success');
-      console.log('[DICOM] Parse complete:', rows, 'x', columns);
 
       return parseResult;
     } catch (err) {

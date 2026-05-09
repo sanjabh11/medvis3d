@@ -7,6 +7,7 @@ import {
   canCreateShareUrl,
   compressImageForSharing,
   generateQRCode,
+  URL_IMAGE_SHARING_DISABLED_REASON,
   type ShareableSession,
 } from '../utils';
 
@@ -45,6 +46,11 @@ export function useSharing(): UseSharingReturn {
     setError(null);
 
     try {
+      if (!canCreateShareUrl('')) {
+        setCanShare(false);
+        throw new Error(URL_IMAGE_SHARING_DISABLED_REASON);
+      }
+
       // Compress image for sharing
       const compressedImage = compressImageForSharing(imageData, 200);
 
@@ -114,20 +120,16 @@ export function useSessionRestore(): {
   session: ShareableSession | null;
   isSharedSession: boolean;
 } {
-  const [session, setSession] = useState<ShareableSession | null>(null);
-  const [isSharedSession, setIsSharedSession] = useState(false);
-
-  // Check URL on mount
-  if (typeof window !== 'undefined') {
-    const urlSession = parseShareUrl(window.location.href);
-    if (urlSession && !session) {
-      setSession(urlSession);
-      setIsSharedSession(true);
+  const [session] = useState<ShareableSession | null>(() => {
+    if (typeof window === 'undefined') {
+      return null;
     }
-  }
+
+    return parseShareUrl(window.location.href);
+  });
 
   return {
     session,
-    isSharedSession,
+    isSharedSession: session !== null,
   };
 }

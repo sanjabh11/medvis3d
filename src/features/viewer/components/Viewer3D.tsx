@@ -1,12 +1,13 @@
 'use client';
 
-import { Suspense, useRef, useCallback } from 'react';
+import { Suspense, useRef, useCallback, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import { DepthMesh } from './DepthMesh';
 import { ViewerLighting } from './ViewerLighting';
 import { CameraController } from './CameraController';
 import { useViewerState } from '../hooks/useViewerState';
+import type { MeshMaterialPreset, ViewPreset } from '@/features/builder';
 
 interface Viewer3DProps {
   imageUrl: string;
@@ -14,6 +15,9 @@ interface Viewer3DProps {
   depthSize: number;
   displacementScale: number;
   wireframe?: boolean;
+  materialPreset?: MeshMaterialPreset;
+  viewPreset?: ViewPreset;
+  resetToken?: number;
   onContextLost?: () => void;
   onContextRestored?: () => void;
 }
@@ -33,6 +37,9 @@ export function Viewer3D({
   depthSize,
   displacementScale,
   wireframe = false,
+  materialPreset = 'clinical-relief',
+  viewPreset = 'oblique',
+  resetToken = 0,
   onContextLost,
   onContextRestored,
 }: Viewer3DProps) {
@@ -40,9 +47,16 @@ export function Viewer3D({
   const {
     handleContextLost,
     handleContextRestored,
+    resetCamera,
     setControlsRef,
     setCameraRef,
   } = useViewerState();
+
+  useEffect(() => {
+    if (resetToken > 0) {
+      resetCamera();
+    }
+  }, [resetCamera, resetToken]);
 
   const onCreated = useCallback(({ gl }: { gl: THREE.WebGLRenderer }) => {
     // Configure renderer
@@ -92,6 +106,7 @@ export function Viewer3D({
             depthSize={depthSize}
             displacementScale={displacementScale}
             wireframe={wireframe}
+            materialPreset={materialPreset}
           />
           
           <CameraController
@@ -101,6 +116,7 @@ export function Viewer3D({
             dampingFactor={0.05}
             minDistance={0.5}
             maxDistance={5}
+            viewPreset={viewPreset}
           />
         </Suspense>
       </Canvas>

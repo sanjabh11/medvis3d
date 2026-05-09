@@ -1,39 +1,56 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { Download, FileText, Printer, Camera, X } from 'lucide-react';
+import { useCallback, useState } from 'react';
+import { Camera, FileText, Printer, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import type { Annotation } from '@/features/annotation';
+import type { ConsultContext, VisualizationFacts } from '@/features/builder';
 import {
-  generatePdfReport,
   downloadReport,
+  generateConsultSnapshot,
   printReport,
-  type PdfReportData,
+  type ConsultSnapshotData,
 } from '../utils/pdf-generator';
 import { generateTimestampFilename } from '@/features/viewer/utils/screenshot';
 
 interface ExportDialogProps {
-  originalImageUrl: string;
-  depthMapUrl?: string;
-  viewer3DCanvas?: HTMLCanvasElement | null;
+  originalImageUrl?: string | null;
+  enhancedImageUrl?: string | null;
+  depthMapUrl?: string | null;
+  getViewer3DCanvas?: () => HTMLCanvasElement | null;
+  consultContext: ConsultContext;
+  visualizationFacts: VisualizationFacts | null;
+  notes: string;
+  patientQuestion: string;
+  annotations: Annotation[];
   onClose: () => void;
   isOpen: boolean;
 }
 
-const DISCLAIMER = `This AI-generated visualization is a simulation created for educational purposes only. 
-It may not perfectly reflect anatomical reality and should NOT be used for medical diagnosis or treatment decisions. 
-Always consult your healthcare provider for medical interpretation and advice.`;
+const DISCLAIMER = `This educational visualization is generated from image processing and depth estimation. It may not reflect anatomical reality and must not be used for diagnosis, treatment decisions, surgical planning, or emergency care. Discuss medical questions with the responsible clinician.`;
 
 export function ExportDialog({
   originalImageUrl,
+  enhancedImageUrl,
   depthMapUrl,
-  viewer3DCanvas,
+  getViewer3DCanvas,
+  consultContext,
+  visualizationFacts,
+  notes,
+  patientQuestion,
+  annotations,
   onClose,
   isOpen,
 }: ExportDialogProps) {
   const [isExporting, setIsExporting] = useState(false);
+  const [includeSourceImage, setIncludeSourceImage] = useState(false);
+  const [includeEnhancedImage, setIncludeEnhancedImage] = useState(false);
+  const [includeDepthMap, setIncludeDepthMap] = useState(false);
+  const [include3DView, setInclude3DView] = useState(true);
 
   const handleScreenshot = useCallback(() => {
+    const viewer3DCanvas = getViewer3DCanvas?.();
     if (!viewer3DCanvas) return;
 
     try {
@@ -47,78 +64,138 @@ export function ExportDialog({
     } catch (err) {
       console.error('[Export] Screenshot failed:', err);
     }
-  }, [viewer3DCanvas]);
+  }, [getViewer3DCanvas]);
 
-  const handleExportReport = useCallback(async () => {
+  const buildSnapshotData = useCallback((): ConsultSnapshotData => {
+    const viewer3DCanvas = getViewer3DCanvas?.();
+    const viewer3DUrl = include3DView ? viewer3DCanvas?.toDataURL('image/png') : undefined;
+
+    return {
+      title: 'MedVis3D Consult Snapshot',
+      date: new Date().toLocaleString(),
+      originalImageUrl: includeSourceImage ? originalImageUrl || undefined : undefined,
+      enhancedImageUrl: includeEnhancedImage ? enhancedImageUrl || undefined : undefined,
+      depthMapUrl: includeDepthMap ? depthMapUrl || undefined : undefined,
+      viewer3DUrl,
+      consultContext,
+      visualizationFacts,
+      notes,
+      patientQuestion,
+      annotations,
+      disclaimer: DISCLAIMER,
+    };
+  }, [
+    annotations,
+    consultContext,
+    depthMapUrl,
+    enhancedImageUrl,
+    include3DView,
+    includeDepthMap,
+    includeEnhancedImage,
+    includeSourceImage,
+    notes,
+    originalImageUrl,
+    patientQuestion,
+    getViewer3DCanvas,
+    visualizationFacts,
+  ]);
+
+  const handleDownloadSnapshot = useCallback(async () => {
     setIsExporting(true);
 
     try {
-      const viewer3DUrl = viewer3DCanvas?.toDataURL('image/png');
-
-      const reportData: PdfReportData = {
-        title: 'Medical Image Analysis Report',
-        date: new Date().toLocaleString(),
-        originalImageUrl,
-        depthMapUrl,
-        viewer3DUrl,
-        disclaimer: DISCLAIMER,
-      };
-
-      const blob = await generatePdfReport(reportData);
-      downloadReport(blob, generateTimestampFilename('medvis3d-report').replace('.png', '.html'));
+      const blob = await generateConsultSnapshot(buildSnapshotData());
+      downloadReport(
+        blob,
+        generateTimestampFilename('medvis3d-consult-snapshot').replace('.png', '.html')
+      );
     } catch (err) {
-      console.error('[Export] Report generation failed:', err);
+      console.error('[Export] Consult snapshot generation failed:', err);
     } finally {
       setIsExporting(false);
     }
-  }, [originalImageUrl, depthMapUrl, viewer3DCanvas]);
+  }, [buildSnapshotData]);
 
   const handlePrint = useCallback(async () => {
     setIsExporting(true);
 
     try {
-      const viewer3DUrl = viewer3DCanvas?.toDataURL('image/png');
-
-      const reportData: PdfReportData = {
-        title: 'Medical Image Analysis Report',
-        date: new Date().toLocaleString(),
-        originalImageUrl,
-        depthMapUrl,
-        viewer3DUrl,
-        disclaimer: DISCLAIMER,
-      };
-
-      const blob = await generatePdfReport(reportData);
+      const blob = await generateConsultSnapshot(buildSnapshotData());
       printReport(blob);
     } catch (err) {
       console.error('[Export] Print failed:', err);
     } finally {
       setIsExporting(false);
     }
-  }, [originalImageUrl, depthMapUrl, viewer3DCanvas]);
+  }, [buildSnapshotData]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md p-6 bg-white">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-[--color-medical-text-primary]">
-            Export Options
-          </h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto bg-white p-6">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-[--color-medical-text-primary]">
+              Consult Snapshot
+            </h2>
+            <p className="text-sm text-[--color-medical-text-secondary]">
+              Local HTML artifact with provenance, notes, annotations, and disclaimers.
+            </p>
+          </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>
         </div>
 
-        <div className="space-y-3">
-          {viewer3DCanvas && (
+        <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 p-3 text-xs leading-relaxed text-blue-900">
+          The source image excluded by default setting reduces accidental PHI exposure. Only
+          enable image sections when the local snapshot is intended for a controlled consult.
+        </div>
+
+        <div className="space-y-2 rounded-md border border-[--color-medical-border] p-3">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={include3DView}
+              onChange={(event) => setInclude3DView(event.target.checked)}
+            />
+            Include current 3D view
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={includeEnhancedImage}
+              onChange={(event) => setIncludeEnhancedImage(event.target.checked)}
+            />
+            Include enhanced image
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={includeDepthMap}
+              onChange={(event) => setIncludeDepthMap(event.target.checked)}
+            />
+            Include depth map
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={includeSourceImage}
+              onChange={(event) => setIncludeSourceImage(event.target.checked)}
+            />
+            Include original source image
+          </label>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          {getViewer3DCanvas && (
             <Button
               variant="outline"
-              className="w-full justify-start h-auto py-3"
+              className="h-auto w-full justify-start py-3"
               onClick={handleScreenshot}
             >
-              <Camera className="h-5 w-5 mr-3 text-[--color-medical-primary]" />
+              <Camera className="mr-3 h-5 w-5 text-[--color-medical-primary]" />
               <div className="text-left">
                 <div className="font-medium">3D Screenshot</div>
                 <div className="text-sm text-gray-500">Save current 3D view as PNG</div>
@@ -128,34 +205,34 @@ export function ExportDialog({
 
           <Button
             variant="outline"
-            className="w-full justify-start h-auto py-3"
-            onClick={handleExportReport}
+            className="h-auto w-full justify-start py-3"
+            onClick={handleDownloadSnapshot}
             disabled={isExporting}
           >
-            <FileText className="h-5 w-5 mr-3 text-[--color-medical-primary]" />
+            <FileText className="mr-3 h-5 w-5 text-[--color-medical-primary]" />
             <div className="text-left">
-              <div className="font-medium">Export Report</div>
-              <div className="text-sm text-gray-500">Download analysis as HTML report</div>
+              <div className="font-medium">Download Consult Snapshot</div>
+              <div className="text-sm text-gray-500">Save sanitized local HTML</div>
             </div>
           </Button>
 
           <Button
             variant="outline"
-            className="w-full justify-start h-auto py-3"
+            className="h-auto w-full justify-start py-3"
             onClick={handlePrint}
             disabled={isExporting}
           >
-            <Printer className="h-5 w-5 mr-3 text-[--color-medical-primary]" />
+            <Printer className="mr-3 h-5 w-5 text-[--color-medical-primary]" />
             <div className="text-left">
-              <div className="font-medium">Print Report</div>
+              <div className="font-medium">Print Snapshot</div>
               <div className="text-sm text-gray-500">Open print dialog</div>
             </div>
           </Button>
         </div>
 
-        <div className="mt-6 pt-4 border-t border-gray-200">
-          <p className="text-xs text-gray-500 text-center">
-            All exports include the educational use disclaimer
+        <div className="mt-6 border-t border-gray-200 pt-4">
+          <p className="text-center text-xs text-gray-500">
+            All snapshots include educational-only and non-diagnostic limitations.
           </p>
         </div>
       </Card>

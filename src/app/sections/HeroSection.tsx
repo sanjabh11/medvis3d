@@ -7,17 +7,18 @@ export function HeroSection() {
     <section className="text-center py-12">
       <div className="inline-flex items-center gap-2 bg-blue-50 text-[--color-medical-primary] px-4 py-2 rounded-full text-sm font-medium mb-6">
         <Sparkles className="h-4 w-4" />
-        AI-Powered Visualization
+        Browser-First 2D to 3D Builder
       </div>
       
       <h1 className="text-4xl md:text-5xl font-bold text-[--color-medical-text-primary] mb-4 tracking-tight">
-        See Your Anatomy in{' '}
+        Build an Educational{' '}
         <span className="text-[--color-medical-primary]">3D</span>
+        {' '}View
       </h1>
       
       <p className="text-xl text-[--color-medical-text-secondary] max-w-2xl mx-auto mb-8 leading-relaxed">
-        Transform medical images into interactive 3D visualizations instantly. 
-        Understand your health better with AI-powered depth estimation.
+        Upload a medical image, improve unclear inputs, estimate depth locally,
+        and explore a confidence-labeled 3D visualization for patient education.
       </p>
       
       <div className="flex flex-wrap justify-center gap-6 text-sm text-[--color-medical-text-secondary]">

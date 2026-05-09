@@ -98,16 +98,13 @@ function analyzeDepthMap(depthMap: Float32Array | null): ReportContext['depthAna
   
   let min = Infinity;
   let max = -Infinity;
-  let sum = 0;
-  
+
   for (let i = 0; i < depthMap.length; i++) {
     const val = depthMap[i];
     if (val < min) min = val;
     if (val > max) max = val;
-    sum += val;
   }
   
-  const avg = sum / depthMap.length;
   const range = max - min;
   
   return {

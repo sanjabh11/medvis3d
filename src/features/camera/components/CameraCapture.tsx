@@ -28,7 +28,7 @@ export function CameraCapture({ onCapture, onCancel }: CameraCaptureProps) {
   } = useCamera();
 
   const handleCapture = useCallback(() => {
-    const imageData = capturePhoto();
+    capturePhoto();
     // Don't call onCapture yet - wait for user confirmation
   }, [capturePhoto]);
 
@@ -110,6 +110,7 @@ export function CameraCapture({ onCapture, onCancel }: CameraCaptureProps) {
     return (
       <Card className="overflow-hidden">
         <div className="relative bg-black">
+          {/* eslint-disable-next-line @next/next/no-img-element -- capturedImage is a browser-generated data URL. */}
           <img
             src={capturedImage}
             alt="Captured"

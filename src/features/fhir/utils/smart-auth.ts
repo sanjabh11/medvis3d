@@ -8,6 +8,25 @@ interface StoredState {
   config: SmartAuthConfig;
 }
 
+interface SmartMetadataExtension {
+  url?: string;
+  valueUri?: string;
+  extension?: SmartMetadataExtension[];
+}
+
+interface SmartCapabilityStatement {
+  rest?: Array<{
+    security?: {
+      extension?: SmartMetadataExtension[];
+    };
+  }>;
+}
+
+interface SmartConfigurationResponse {
+  authorization_endpoint?: string;
+  token_endpoint?: string;
+}
+
 function generateRandomString(length: number): string {
   const array = new Uint8Array(length);
   crypto.getRandomValues(array);
@@ -29,26 +48,26 @@ export async function discoverSmartConfig(issUrl: string): Promise<FhirServerCon
     const response = await fetch(smartConfigUrl);
     
     if (response.ok) {
-      const config = await response.json();
+      const config = (await response.json()) as SmartConfigurationResponse;
       return {
         baseUrl: issUrl,
-        authorizationEndpoint: config.authorization_endpoint,
-        tokenEndpoint: config.token_endpoint,
+        authorizationEndpoint: config.authorization_endpoint || '',
+        tokenEndpoint: config.token_endpoint || '',
       };
     }
 
     // Fallback to metadata endpoint
     const metadataUrl = `${issUrl}/metadata`;
     const metaResponse = await fetch(metadataUrl);
-    const metadata = await metaResponse.json();
+    const metadata = (await metaResponse.json()) as SmartCapabilityStatement;
 
     const security = metadata.rest?.[0]?.security;
     const oauthExtension = security?.extension?.find(
-      (ext: any) => ext.url === 'http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris'
+      (ext) => ext.url === 'http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris'
     );
 
     const getExtValue = (url: string) =>
-      oauthExtension?.extension?.find((e: any) => e.url === url)?.valueUri;
+      oauthExtension?.extension?.find((extension) => extension.url === url)?.valueUri;
 
     return {
       baseUrl: issUrl,

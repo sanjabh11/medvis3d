@@ -14,8 +14,6 @@ interface DepthAnimationPlayerProps {
 
 export function DepthAnimationPlayer({ onFrameChange, className }: DepthAnimationPlayerProps) {
   const {
-    status,
-    frames,
     currentFrameIndex,
     totalFrames,
     fps,

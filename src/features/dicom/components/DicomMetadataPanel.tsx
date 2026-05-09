@@ -11,7 +11,7 @@ interface DicomMetadataPanelProps {
 
 export function DicomMetadataPanel({ metadata, className }: DicomMetadataPanelProps) {
   const items = [
-    { label: 'Patient ID', value: metadata.patientId || 'Anonymous' },
+    { label: 'PHI', value: 'PHI redacted' },
     { label: 'Study Date', value: formatDate(metadata.studyDate) },
     { label: 'Modality', value: metadata.modality || 'Unknown' },
     { label: 'Study', value: metadata.studyDescription || '-' },
@@ -19,6 +19,9 @@ export function DicomMetadataPanel({ metadata, className }: DicomMetadataPanelPr
     { label: 'Dimensions', value: `${metadata.columns || 0} × ${metadata.rows || 0}` },
     { label: 'Bits', value: `${metadata.bitsStored || 0} stored / ${metadata.bitsAllocated || 0} allocated` },
     { label: 'Window', value: `C: ${metadata.windowCenter || 40} / W: ${metadata.windowWidth || 400}` },
+    { label: 'Photometric', value: metadata.photometricInterpretation || 'Unknown' },
+    { label: 'Transfer Syntax', value: formatTransferSyntax(metadata.transferSyntaxUID) },
+    { label: 'Support', value: metadata.unsupportedReason || metadata.supportStatus || 'unknown' },
   ];
 
   return (
@@ -30,6 +33,10 @@ export function DicomMetadataPanel({ metadata, className }: DicomMetadataPanelPr
         </h3>
       </div>
       <div className="p-4 space-y-2">
+        <p className="rounded-md border border-blue-200 bg-blue-50 p-2 text-xs leading-relaxed text-blue-900">
+          Patient name and patient ID are redacted by default. This panel is for safe technical
+          context only, not diagnostic interpretation.
+        </p>
         {items.map(({ label, value }) => (
           <div key={label} className="flex justify-between text-sm">
             <span className="text-[--color-medical-text-secondary]">{label}</span>
@@ -53,4 +60,11 @@ function formatDate(dateStr?: string): string {
   }
   
   return dateStr;
+}
+
+function formatTransferSyntax(uid?: string): string {
+  if (!uid) return 'Unknown';
+  if (uid === '1.2.840.10008.1.2') return 'Implicit VR Little Endian';
+  if (uid === '1.2.840.10008.1.2.1') return 'Explicit VR Little Endian';
+  return uid;
 }

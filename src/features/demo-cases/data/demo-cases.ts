@@ -1,0 +1,76 @@
+import type { DemoCase } from '../types';
+import { generateSyntheticImageData } from '../utils/generate-demo-image';
+
+const LIMITATIONS = [
+  'Synthetic non-PHI demo case for product proof only.',
+  'Educational visualization, not diagnostic interpretation or anatomical reconstruction.',
+];
+
+export const DEMO_CASES: DemoCase[] = [
+  {
+    id: 'synthetic-xray-like-knee',
+    title: 'Synthetic xray-like joint consult',
+    kind: 'xray-like',
+    modality: 'xray',
+    bodyRegion: 'knee',
+    buyerLane: 'Orthopedic and sports medicine clinics',
+    claimBoundary: 'Shows how a flat image can become an educational 3D relief view.',
+    knownLimitations: LIMITATIONS,
+    loadImageData: async () => generateSyntheticImageData('xray-like'),
+  },
+  {
+    id: 'synthetic-ct-mri-slice-like',
+    title: 'Synthetic ct-mri-slice-like consult',
+    kind: 'ct-mri-slice-like',
+    modality: 'ct-mri-slice',
+    bodyRegion: 'abdomen',
+    buyerLane: 'Imaging center patient explanation',
+    claimBoundary: 'Demonstrates slice enhancement and depth visualization without clinical findings.',
+    knownLimitations: LIMITATIONS,
+    loadImageData: async () => generateSyntheticImageData('ct-mri-slice-like'),
+  },
+  {
+    id: 'synthetic-ultrasound-like',
+    title: 'Synthetic ultrasound-like consult',
+    kind: 'ultrasound-like',
+    modality: 'ultrasound',
+    bodyRegion: 'soft tissue',
+    buyerLane: 'Point-of-care education',
+    claimBoundary: 'Shows low-detail image handling with confidence and limitation labels.',
+    knownLimitations: LIMITATIONS,
+    loadImageData: async () => generateSyntheticImageData('ultrasound-like'),
+  },
+  {
+    id: 'synthetic-low-contrast',
+    title: 'Synthetic low-contrast input',
+    kind: 'low-contrast',
+    modality: 'general-image',
+    bodyRegion: 'unspecified region',
+    buyerLane: 'Patient experience and demo review',
+    claimBoundary: 'Tests enhancement value on unclear inputs without hallucinated detail claims.',
+    knownLimitations: LIMITATIONS,
+    loadImageData: async () => generateSyntheticImageData('low-contrast'),
+  },
+  {
+    id: 'synthetic-camera-captured-screen',
+    title: 'Synthetic camera-captured-screen consult',
+    kind: 'camera-captured-screen',
+    modality: 'camera-capture',
+    bodyRegion: 'screen-captured image',
+    buyerLane: 'Clinic consult workflow',
+    claimBoundary: 'Demonstrates camera/screen capture handling for educational use only.',
+    knownLimitations: LIMITATIONS,
+    loadImageData: async () => generateSyntheticImageData('camera-captured-screen'),
+  },
+  {
+    id: 'synthetic-general-medical-photo-like',
+    title: 'Synthetic general medical-photo-like image',
+    kind: 'general-medical-photo-like',
+    modality: 'general-image',
+    bodyRegion: 'general education',
+    buyerLane: 'Medical education and simulation',
+    claimBoundary: 'Shows non-DICOM image handling and consult snapshot workflow.',
+    knownLimitations: LIMITATIONS,
+    loadImageData: async () => generateSyntheticImageData('general-medical-photo-like'),
+  },
+];

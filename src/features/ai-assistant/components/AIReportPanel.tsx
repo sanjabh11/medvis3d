@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import { Sparkles, FileText, Loader2, Copy, Check, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useAIReportGenerator, analyzeDepthMap, type AIReportContent } from '../hooks/useAIReportGenerator';
+import { useAIReportGenerator, analyzeDepthMap } from '../hooks/useAIReportGenerator';
 
 interface AIReportPanelProps {
   depthMap: Float32Array | null;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { saveSession, loadSession, clearSession, hasStoredSession, getSessionAge, formatSessionAge, type StoredSession } from '../utils';
 
 interface UseSessionPersistenceReturn {
@@ -14,30 +14,25 @@ interface UseSessionPersistenceReturn {
   setAutoSaveEnabled: (enabled: boolean) => void;
 }
 
+function getInitialSessionState(): Pick<UseSessionPersistenceReturn, 'hasSession' | 'sessionAge'> {
+  const exists = hasStoredSession();
+  const age = exists ? getSessionAge() : null;
+
+  return {
+    hasSession: exists,
+    sessionAge: age === null ? null : formatSessionAge(age),
+  };
+}
+
 export function useSessionPersistence(): UseSessionPersistenceReturn {
-  const [hasSession, setHasSession] = useState(false);
-  const [sessionAge, setSessionAge] = useState<string | null>(null);
+  const [sessionState, setSessionState] = useState(getInitialSessionState);
   const [savedSession, setSavedSession] = useState<StoredSession | null>(null);
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
-
-  // Check for existing session on mount
-  useEffect(() => {
-    const exists = hasStoredSession();
-    setHasSession(exists);
-
-    if (exists) {
-      const age = getSessionAge();
-      if (age !== null) {
-        setSessionAge(formatSessionAge(age));
-      }
-    }
-  }, []);
 
   const save = useCallback((session: Omit<StoredSession, 'version' | 'timestamp'>): boolean => {
     const success = saveSession(session);
     if (success) {
-      setHasSession(true);
-      setSessionAge('Just now');
+      setSessionState({ hasSession: true, sessionAge: 'Just now' });
     }
     return success;
   }, []);
@@ -50,14 +45,13 @@ export function useSessionPersistence(): UseSessionPersistenceReturn {
 
   const clear = useCallback(() => {
     clearSession();
-    setHasSession(false);
-    setSessionAge(null);
+    setSessionState({ hasSession: false, sessionAge: null });
     setSavedSession(null);
   }, []);
 
   return {
-    hasSession,
-    sessionAge,
+    hasSession: sessionState.hasSession,
+    sessionAge: sessionState.sessionAge,
     savedSession,
     save,
     restore,

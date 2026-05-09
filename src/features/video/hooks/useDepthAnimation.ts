@@ -33,7 +33,6 @@ const DEFAULT_FPS = 10;
 
 export function useDepthAnimation(): UseDepthAnimationReturn {
   const [status, setStatus] = useState<AnimationStatus>('idle');
-  const [error, setError] = useState<string | null>(null);
   const [frames, setFrames] = useState<DepthFrame[]>([]);
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
   const [fps, setFps] = useState(DEFAULT_FPS);
@@ -130,7 +129,7 @@ export function useDepthAnimation(): UseDepthAnimationReturn {
 
   return {
     status,
-    error,
+    error: null,
     frames,
     currentFrameIndex,
     totalFrames: frames.length,

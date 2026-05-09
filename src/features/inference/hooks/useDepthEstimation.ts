@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import * as ort from 'onnxruntime-web';
 import { imageDataToTensor, normalizeDepthMap, MODEL_INPUT_SIZE } from '@/lib/onnx';
+import { refineDepthMap } from '@/features/builder';
 
 export type InferenceStatus = 'idle' | 'preprocessing' | 'inferring' | 'postprocessing' | 'complete' | 'error';
 
@@ -40,15 +41,10 @@ export function useDepthEstimation(
 
       try {
         // Step 1: Preprocess image to tensor
-        console.log('[Inference] Preprocessing image...');
-        console.log('[Inference] Input dimensions:', imageData.width, 'x', imageData.height);
-        
         const inputTensor = imageDataToTensor(imageData);
-        console.log('[Inference] Tensor shape:', inputTensor.dims);
 
         // Step 2: Run inference
         setStatus('inferring');
-        console.log('[Inference] Running depth estimation...');
 
         // Determine input name (may vary by model export)
         const inputName = session.inputNames[0] || 'pixel_values';
@@ -64,27 +60,30 @@ export function useDepthEstimation(
           throw new Error(`Output tensor "${outputName}" not found in results`);
         }
 
-        console.log('[Inference] Output tensor shape:', outputTensor.dims);
-        console.log('[Inference] Output tensor type:', outputTensor.type);
-
         // Step 4: Postprocess - normalize depth map
         setStatus('postprocessing');
-        console.log('[Inference] Normalizing depth map...');
 
         const normalizedDepth = normalizeDepthMap(outputTensor.data as Float32Array);
+        const refinedDepth = refineDepthMap(normalizedDepth, {
+          width: MODEL_INPUT_SIZE,
+          height: MODEL_INPUT_SIZE,
+          smoothPasses: 1,
+          edgeThreshold: 0.07,
+          clipPercentile: 1,
+        });
 
         const endTime = performance.now();
         const duration = endTime - startTime;
 
-        setDepthMap(normalizedDepth);
+        setDepthMap(refinedDepth);
         setInferenceTime(duration);
         setStatus('complete');
 
-        console.log(`[Inference] Complete in ${duration.toFixed(0)}ms`);
-        console.log('[Inference] Depth map size:', normalizedDepth.length);
-        console.log('[Inference] Depth range: [0, 1] normalized');
+        if (process.env.NODE_ENV !== 'production') {
+          console.info(`[Inference] Educational depth build complete in ${duration.toFixed(0)}ms`);
+        }
 
-        return normalizedDepth;
+        return refinedDepth;
       } catch (err) {
         console.error('[Inference] Failed:', err);
         setError(err instanceof Error ? err.message : 'Depth estimation failed');

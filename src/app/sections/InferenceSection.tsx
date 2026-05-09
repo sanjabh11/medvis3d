@@ -7,10 +7,47 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useInference } from '@/features/inference';
 import { useAppStore } from '@/stores';
-import { getBackendDisplayName, getExpectedInferenceTime } from '@/lib/onnx';
+import { DEPTH_MODEL_INFO, MODEL_INPUT_SIZE, getBackendDisplayName, getExpectedInferenceTime } from '@/lib/onnx';
+import { estimateDepthConfidence, type ImageQualityOverall, type VisualizationConfidence } from '@/features/builder';
+
+function combineConfidence(
+  imageQuality: ImageQualityOverall | undefined,
+  depthConfidence: VisualizationConfidence
+): VisualizationConfidence {
+  if (!imageQuality || imageQuality === 'insufficient' || imageQuality === 'low-confidence') {
+    return 'low';
+  }
+  if (imageQuality === 'enhanceable' || depthConfidence === 'medium') {
+    return depthConfidence === 'low' ? 'low' : 'medium';
+  }
+  return depthConfidence;
+}
+
+function ModelProvenanceNote({
+  backend,
+}: {
+  backend?: 'webgpu' | 'wasm';
+}) {
+  return (
+    <p className="mt-2 text-xs leading-relaxed text-[--color-medical-text-secondary]">
+      {DEPTH_MODEL_INFO.notice} Output is an educational depth visualization, not a diagnostic
+      interpretation.
+      {backend ? ` Backend: ${getBackendDisplayName(backend)}.` : ''}
+    </p>
+  );
+}
 
 export function InferenceSection() {
-  const { file, imageData, setDepthMap } = useAppStore();
+  const {
+    file,
+    imageData,
+    sourceType,
+    qualityReport,
+    enhancedImageData,
+    enhancedResult,
+    setDepthMap,
+    setVisualizationFacts,
+  } = useAppStore();
   const {
     runtimeStatus,
     modelProgress,
@@ -28,35 +65,50 @@ export function InferenceSection() {
   useEffect(() => {
     if (depthMap) {
       setDepthMap(depthMap);
+      const depthConfidence = estimateDepthConfidence(depthMap, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
+      const confidence = combineConfidence(qualityReport?.overall, depthConfidence);
+      setVisualizationFacts({
+        sourceType: sourceType || 'image',
+        imageQuality: qualityReport?.overall || 'enhanceable',
+        enhancementProfile: enhancedResult?.profile || 'auto',
+        enhancementSteps: enhancedResult?.appliedSteps || [],
+        modelName: DEPTH_MODEL_INFO.name,
+        modelProvider: DEPTH_MODEL_INFO.provider,
+        modelVariant: DEPTH_MODEL_INFO.variantLabel,
+        backend: capabilities ? getBackendDisplayName(capabilities.recommendedBackend) : 'Browser runtime',
+        confidence,
+        limitations: [
+          'This is a depth-based educational visualization from a single 2D image.',
+          'It is not a diagnostic interpretation, treatment recommendation, or true volumetric reconstruction.',
+        ],
+        privacyStatus: DEPTH_MODEL_INFO.notice,
+      });
     }
-  }, [depthMap, setDepthMap]);
+  }, [
+    capabilities,
+    depthMap,
+    enhancedResult,
+    qualityReport,
+    setDepthMap,
+    setVisualizationFacts,
+    sourceType,
+  ]);
 
   // Don't show if no file uploaded
   if (!file) {
     return null;
   }
 
-  const handleGenerateDepth = async () => {
-    if (!imageData) return;
-    
-    // Initialize runtime if not ready
-    if (runtimeStatus === 'idle') {
-      await initializeRuntime();
-    }
-    
-    // Wait for model to be ready, then run inference
-    // Note: In a real app, we'd want better state handling here
-  };
-
   const handleRunInference = async () => {
-    if (!imageData) return;
-    await estimateDepth(imageData);
+    const imageForInference = enhancedImageData || imageData;
+    if (!imageForInference) return;
+    await estimateDepth(imageForInference);
   };
 
   // Model loading state
   if (runtimeStatus === 'idle') {
     return (
-      <section>
+      <section id="builder-inference">
         <Card className="p-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -70,6 +122,7 @@ export function InferenceSection() {
                 <p className="text-sm text-[--color-medical-text-secondary]">
                   Load the AI model to generate 3D visualization
                 </p>
+                <ModelProvenanceNote />
               </div>
             </div>
             <Button
@@ -88,7 +141,7 @@ export function InferenceSection() {
   // Detecting hardware
   if (runtimeStatus === 'detecting') {
     return (
-      <section>
+      <section id="builder-inference">
         <Card className="p-6">
           <div className="flex items-center gap-4">
             <Loader2 className="h-6 w-6 animate-spin text-[--color-medical-primary]" />
@@ -109,7 +162,7 @@ export function InferenceSection() {
   // Loading model
   if (runtimeStatus === 'loading' && modelProgress) {
     return (
-      <section>
+      <section id="builder-inference">
         <Card className="p-6">
           <div className="space-y-4">
             <div className="flex items-center gap-4">
@@ -123,6 +176,7 @@ export function InferenceSection() {
                     Using {getBackendDisplayName(capabilities.recommendedBackend)}
                   </p>
                 )}
+                <ModelProvenanceNote backend={capabilities?.recommendedBackend} />
               </div>
             </div>
             {modelProgress.stage === 'downloading' && (
@@ -137,7 +191,7 @@ export function InferenceSection() {
   // Model load error
   if (runtimeStatus === 'error') {
     return (
-      <section>
+      <section id="builder-inference">
         <Card className="p-6 border-red-300 bg-red-50">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -175,7 +229,7 @@ export function InferenceSection() {
       };
 
       return (
-        <section>
+        <section id="builder-inference">
           <Card className="p-6">
             <div className="flex items-center gap-4">
               <Loader2 className="h-6 w-6 animate-spin text-[--color-medical-primary]" />
@@ -196,7 +250,7 @@ export function InferenceSection() {
     // Inference complete
     if (inferenceStatus === 'complete' && depthMap) {
       return (
-        <section>
+        <section id="builder-inference">
           <Card className="p-6 border-[--color-medical-success] bg-emerald-50">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
@@ -216,6 +270,7 @@ export function InferenceSection() {
                       <span>{getBackendDisplayName(capabilities.recommendedBackend)}</span>
                     )}
                   </div>
+                  <ModelProvenanceNote backend={capabilities?.recommendedBackend} />
                 </div>
               </div>
               <Button
@@ -234,7 +289,7 @@ export function InferenceSection() {
     // Inference error
     if (inferenceStatus === 'error') {
       return (
-        <section>
+        <section id="builder-inference">
           <Card className="p-6 border-red-300 bg-red-50">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
@@ -263,7 +318,7 @@ export function InferenceSection() {
 
     // Ready to run inference
     return (
-      <section>
+      <section id="builder-inference">
         <Card className="p-6 border-[--color-medical-primary] bg-blue-50">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -273,6 +328,11 @@ export function InferenceSection() {
               <div>
                 <p className="font-semibold text-[--color-medical-text-primary]">
                   AI Model Ready
+                </p>
+                <p className="text-sm text-[--color-medical-text-secondary]">
+                  {enhancedImageData
+                    ? 'Using enhanced pixels for the 3D depth build; original image is preserved.'
+                    : 'Using original pixels for the 3D depth build.'}
                 </p>
                 <div className="flex items-center gap-4 text-sm text-[--color-medical-text-secondary]">
                   {capabilities && (
@@ -285,11 +345,12 @@ export function InferenceSection() {
                     </>
                   )}
                 </div>
+                <ModelProvenanceNote backend={capabilities?.recommendedBackend} />
               </div>
             </div>
             <Button
               onClick={handleRunInference}
-              disabled={!imageData}
+              disabled={!imageData && !enhancedImageData}
               className="bg-[--color-medical-primary] hover:bg-[--color-medical-primary-hover]"
             >
               <Brain className="h-4 w-4 mr-2" />

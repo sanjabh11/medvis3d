@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Stethoscope, Loader2, CheckCircle, AlertCircle, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -27,8 +27,14 @@ const DEMO_SERVERS = [
 ];
 
 export function FhirLauncher({ clientId, onPatientLoaded }: FhirLauncherProps) {
-  const { status, patient, client, error, isEhrLaunch, launchSmart, disconnect } = useFhirContext();
+  const { status, patient, client, error, launchSmart, disconnect } = useFhirContext();
   const [selectedServer, setSelectedServer] = useState(0);
+
+  useEffect(() => {
+    if (status === 'connected' && patient?.id) {
+      onPatientLoaded?.(patient.id);
+    }
+  }, [onPatientLoaded, patient?.id, status]);
 
   const handleLaunch = async () => {
     const server = DEMO_SERVERS[selectedServer];
@@ -124,7 +130,7 @@ export function FhirLauncher({ clientId, onPatientLoaded }: FhirLauncherProps) {
               Connect to EHR
             </p>
             <p className="text-sm text-[--color-medical-text-secondary]">
-              Launch from Epic, Cerner, or SMART sandbox
+              SMART sandbox / registered EHR app required for production
             </p>
           </div>
         </div>

@@ -1,5 +1,11 @@
 import type { FhirPatient, FhirImagingStudy, SmartTokenResponse } from '../types';
 
+interface FhirBundle<T> {
+  entry?: Array<{
+    resource: T;
+  }>;
+}
+
 export class FhirClient {
   private baseUrl: string;
   private accessToken: string;
@@ -35,8 +41,8 @@ export class FhirClient {
   }
 
   async searchImagingStudies(patientId: string): Promise<FhirImagingStudy[]> {
-    const bundle = await this.request<any>(`ImagingStudy?patient=${patientId}`);
-    return bundle.entry?.map((e: any) => e.resource) || [];
+    const bundle = await this.request<FhirBundle<FhirImagingStudy>>(`ImagingStudy?patient=${patientId}`);
+    return bundle.entry?.map((entry) => entry.resource) || [];
   }
 
   getPatientDisplayName(patient: FhirPatient): string {

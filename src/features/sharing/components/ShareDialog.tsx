@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Share2, Copy, Check, QrCode, X, Loader2, Download } from 'lucide-react';
+import { Share2, Copy, Check, X, Loader2, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useSharing } from '../hooks/useSharing';
@@ -29,7 +29,6 @@ export function ShareDialog({
     shareUrl,
     qrCodeUrl,
     error,
-    canShare,
     generateShareLink,
     copyToClipboard,
     reset,
@@ -48,7 +47,6 @@ export function ShareDialog({
   useEffect(() => {
     if (!isOpen) {
       reset();
-      setCopied(false);
     }
   }, [isOpen, reset]);
 
@@ -106,6 +104,7 @@ export function ShareDialog({
             {qrCodeUrl && (
               <div className="text-center">
                 <div className="inline-block p-4 bg-white border border-gray-200 rounded-lg">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- QR code is generated client-side as a data URL. */}
                   <img
                     src={qrCodeUrl}
                     alt="Share QR Code"

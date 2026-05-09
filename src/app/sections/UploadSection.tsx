@@ -8,24 +8,101 @@ import { useAppStore } from '@/stores';
 import { cn } from '@/lib/utils';
 import { useDicomParser } from '@/features/dicom';
 import { CameraCapture } from '@/features/camera';
+import {
+  analyzeImageQuality,
+  enhanceImageData,
+  ImageQualityPanel,
+  type EnhancementProfile,
+  type SourceType,
+} from '@/features/builder';
 
 type InputMode = 'upload' | 'camera' | 'dicom';
 
 export function UploadSection() {
-  const { file, previewUrl, setFile, setPreviewUrl, setImageData, reset } = useAppStore();
+  const {
+    file,
+    imageData,
+    previewUrl,
+    qualityReport,
+    enhancementProfile,
+    enhancedPreviewUrl,
+    enhancedResult,
+    setFile,
+    setPreviewUrl,
+    setImageData,
+    setSourceType,
+    setQualityReport,
+    setEnhancementProfile,
+    setEnhancedImageData,
+    setEnhancedPreviewUrl,
+    setEnhancedResult,
+    setDepthMap,
+    setVisualizationFacts,
+    reset,
+  } = useAppStore();
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [inputMode, setInputMode] = useState<InputMode | null>(null);
-  const { parseDicom, status: dicomStatus } = useDicomParser();
+  const { parseDicom } = useDicomParser();
 
-  const handleImageData = useCallback((imageData: ImageData, preview: string, fileName: string) => {
+  const createPreviewFromImageData = useCallback((data: ImageData) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = data.width;
+    canvas.height = data.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.putImageData(data, 0, 0);
+    return canvas.toDataURL('image/png');
+  }, []);
+
+  const applyEnhancement = useCallback((
+    sourceImageData: ImageData,
+    profile: EnhancementProfile
+  ) => {
+    const report = analyzeImageQuality(sourceImageData);
+    const enhanced = enhanceImageData(sourceImageData, profile, report);
+    const enhancedPreview = createPreviewFromImageData(enhanced.imageData);
+
+    setQualityReport(report);
+    setEnhancedImageData(enhanced.imageData);
+    setEnhancedResult(enhanced);
+    if (enhancedPreview) {
+      setEnhancedPreviewUrl(enhancedPreview);
+    }
+  }, [
+    createPreviewFromImageData,
+    setEnhancedImageData,
+    setEnhancedPreviewUrl,
+    setEnhancedResult,
+    setQualityReport,
+  ]);
+
+  const handleImageData = useCallback((
+    sourceImageData: ImageData,
+    preview: string,
+    fileName: string,
+    sourceType: SourceType
+  ) => {
     // Create a dummy file for display purposes
     const dummyFile = new File([], fileName, { type: 'image/png' });
     setFile(dummyFile);
     setPreviewUrl(preview);
-    setImageData(imageData);
+    setImageData(sourceImageData);
+    setSourceType(sourceType);
+    setDepthMap(null);
+    setVisualizationFacts(null);
+    applyEnhancement(sourceImageData, enhancementProfile);
     setInputMode(null);
-  }, [setFile, setPreviewUrl, setImageData]);
+  }, [
+    applyEnhancement,
+    enhancementProfile,
+    setDepthMap,
+    setFile,
+    setImageData,
+    setPreviewUrl,
+    setSourceType,
+    setVisualizationFacts,
+  ]);
 
   const handleFileSelect = useCallback(async (selectedFile: File) => {
     // Check if DICOM
@@ -43,7 +120,7 @@ export function UploadSection() {
         if (ctx) {
           ctx.putImageData(result.imageData, 0, 0);
           const preview = canvas.toDataURL('image/png');
-          handleImageData(result.imageData, preview, selectedFile.name);
+          handleImageData(result.imageData, preview, selectedFile.name, 'dicom');
         }
       }
       setIsLoading(false);
@@ -63,8 +140,9 @@ export function UploadSection() {
     }
 
     setIsLoading(true);
+    const objectUrl = URL.createObjectURL(selectedFile);
     setFile(selectedFile);
-    setPreviewUrl(URL.createObjectURL(selectedFile));
+    setPreviewUrl(objectUrl);
 
     const img = new Image();
     img.onload = () => {
@@ -74,21 +152,47 @@ export function UploadSection() {
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.drawImage(img, 0, 0);
-        const imageData = ctx.getImageData(0, 0, img.width, img.height);
-        setImageData(imageData);
+        const loadedImageData = ctx.getImageData(0, 0, img.width, img.height);
+        setImageData(loadedImageData);
+        setSourceType('image');
+        setDepthMap(null);
+        setVisualizationFacts(null);
+        applyEnhancement(loadedImageData, enhancementProfile);
       }
       setIsLoading(false);
     };
     img.onerror = () => {
       setIsLoading(false);
+      reset();
       alert('Failed to load image');
     };
-    img.src = URL.createObjectURL(selectedFile);
-  }, [setFile, setPreviewUrl, setImageData, parseDicom, handleImageData]);
+    img.src = objectUrl;
+  }, [
+    applyEnhancement,
+    enhancementProfile,
+    handleImageData,
+    parseDicom,
+    reset,
+    setDepthMap,
+    setFile,
+    setImageData,
+    setPreviewUrl,
+    setSourceType,
+    setVisualizationFacts,
+  ]);
 
   const handleCameraCapture = useCallback((imageData: ImageData, preview: string) => {
-    handleImageData(imageData, preview, 'camera-capture.png');
+    handleImageData(imageData, preview, 'camera-capture.png', 'camera');
   }, [handleImageData]);
+
+  const handleProfileChange = useCallback((profile: EnhancementProfile) => {
+    setEnhancementProfile(profile);
+    setDepthMap(null);
+    setVisualizationFacts(null);
+    if (imageData) {
+      applyEnhancement(imageData, profile);
+    }
+  }, [applyEnhancement, imageData, setDepthMap, setEnhancementProfile, setVisualizationFacts]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -122,11 +226,32 @@ export function UploadSection() {
         <Card className="p-6">
           <div className="flex flex-col md:flex-row gap-6">
             <div className="relative flex-1">
-              <img
-                src={previewUrl}
-                alt="Uploaded medical image"
-                className="w-full h-64 md:h-80 object-contain rounded-lg bg-gray-100"
-              />
+              <div className="grid gap-3 lg:grid-cols-2">
+                <div>
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[--color-medical-text-secondary]">
+                    Original
+                  </p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={previewUrl}
+                    alt="Uploaded medical image"
+                    className="h-64 w-full rounded-lg bg-gray-100 object-contain md:h-80"
+                  />
+                </div>
+                {enhancedPreviewUrl && (
+                  <div>
+                    <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[--color-medical-text-secondary]">
+                      Enhanced for 3D
+                    </p>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={enhancedPreviewUrl}
+                      alt="Enhanced medical image prepared for 3D visualization"
+                      className="h-64 w-full rounded-lg bg-gray-100 object-contain md:h-80"
+                    />
+                  </div>
+                )}
+              </div>
               <button
                 onClick={reset}
                 className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
@@ -144,11 +269,12 @@ export function UploadSection() {
               </div>
               <div className="flex items-center gap-2 text-sm text-[--color-medical-success]">
                 <div className="h-2 w-2 rounded-full bg-[--color-medical-success]" />
-                Ready for 3D visualization
+                Ready for educational 3D visualization
               </div>
               <Button 
                 className="w-full bg-[--color-medical-primary] hover:bg-[--color-medical-primary-hover]"
                 disabled={isLoading}
+                onClick={() => document.getElementById('builder-inference')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
               >
                 {isLoading ? (
                   <>
@@ -161,6 +287,16 @@ export function UploadSection() {
               </Button>
             </div>
           </div>
+          {qualityReport && (
+            <div className="mt-5">
+              <ImageQualityPanel
+                report={qualityReport}
+                selectedProfile={enhancementProfile}
+                enhancedResult={enhancedResult}
+                onProfileChange={handleProfileChange}
+              />
+            </div>
+          )}
         </Card>
       </section>
     );

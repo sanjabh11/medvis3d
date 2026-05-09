@@ -1,18 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 import { detectDevice, getMemoryWarning } from '@/lib/utils/device-detection';
 
 export function MemoryWarning() {
-  const [warning, setWarning] = useState<string | null>(null);
-  const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
+  const [warning] = useState<string | null>(() => {
     const device = detectDevice();
-    const warningMessage = getMemoryWarning(device);
-    setWarning(warningMessage);
-  }, []);
+    return getMemoryWarning(device);
+  });
+  const [dismissed, setDismissed] = useState(false);
 
   if (!warning || dismissed) {
     return null;

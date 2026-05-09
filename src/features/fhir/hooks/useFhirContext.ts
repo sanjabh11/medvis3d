@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import type { FhirPatient, SmartTokenResponse, SmartAuthConfig } from '../types';
+import type { FhirPatient, SmartAuthConfig } from '../types';
 import {
   initiateSmartLaunch,
   handleSmartCallback,

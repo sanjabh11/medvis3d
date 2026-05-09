@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { en, es, type TranslationKeys } from './translations';
 
 export type Locale = 'en' | 'es';
@@ -44,14 +44,7 @@ interface I18nProviderProps {
 }
 
 export function I18nProvider({ children, defaultLocale }: I18nProviderProps) {
-  const [locale, setLocaleState] = useState<Locale>(defaultLocale || 'en');
-
-  // Initialize locale on mount
-  useEffect(() => {
-    if (!defaultLocale) {
-      setLocaleState(getInitialLocale());
-    }
-  }, [defaultLocale]);
+  const [locale, setLocaleState] = useState<Locale>(() => defaultLocale || getInitialLocale());
 
   const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);

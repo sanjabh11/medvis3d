@@ -2,12 +2,15 @@
 
 import { useState, useCallback, useRef } from 'react';
 import * as THREE from 'three';
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 interface CameraState {
   position: THREE.Vector3;
   target: THREE.Vector3;
   zoom: number;
 }
+
+export type OrbitControlsHandle = OrbitControlsImpl;
 
 const DEFAULT_CAMERA_STATE: CameraState = {
   position: new THREE.Vector3(0, 0, 2),
@@ -21,7 +24,7 @@ export function useViewerState() {
   const [error, setError] = useState<string | null>(null);
   const [contextLost, setContextLost] = useState(false);
   
-  const controlsRef = useRef<any>(null);
+  const controlsRef = useRef<OrbitControlsHandle | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const initialCameraState = useRef<CameraState>(DEFAULT_CAMERA_STATE);
 
@@ -68,7 +71,7 @@ export function useViewerState() {
     setError(null);
   }, []);
 
-  const setControlsRef = useCallback((controls: any) => {
+  const setControlsRef = useCallback((controls: OrbitControlsHandle | null) => {
     controlsRef.current = controls;
   }, []);
 

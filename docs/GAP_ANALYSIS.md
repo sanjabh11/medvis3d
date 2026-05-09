@@ -201,8 +201,8 @@ Download from: https://huggingface.co/depth-anything/Depth-Anything-V2-Small-hf
 
 For production with LLM integration:
 ```env
-NEXT_PUBLIC_OPENAI_API_KEY=sk-...  # If using OpenAI
-NEXT_PUBLIC_ANTHROPIC_API_KEY=sk-... # If using Claude
+OPENAI_API_KEY=replace-with-server-side-openai-key  # If using OpenAI
+ANTHROPIC_API_KEY=replace-with-server-side-anthropic-key # If using Claude
 ```
 
 ---

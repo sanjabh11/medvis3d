@@ -163,8 +163,8 @@ Create `.env.local` (optional):
 
 ```env
 # For future LLM integration
-NEXT_PUBLIC_OPENAI_API_KEY=sk-...
-NEXT_PUBLIC_ANTHROPIC_API_KEY=sk-...
+OPENAI_API_KEY=replace-with-server-side-openai-key
+ANTHROPIC_API_KEY=replace-with-server-side-anthropic-key
 ```
 
 ### AI Model Setup
